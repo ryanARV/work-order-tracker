@@ -7,6 +7,7 @@ import AddLineItemModal from '@/components/AddLineItemModal';
 import CommentsSection from '@/components/CommentsSection';
 import WorkOrderPartsTable from '@/components/WorkOrderPartsTable';
 import PartPickerModal from '@/components/PartPickerModal';
+import AdjustTimeModal from '@/components/AdjustTimeModal';
 
 interface User {
   id: string;
@@ -23,6 +24,8 @@ interface TimeEntry {
   notes: string | null;
   pauseReason: string | null;
   approvalState: string;
+  editedReason: string | null;
+  editedAt: string | null;
   user: {
     id: string;
     name: string;
@@ -69,6 +72,8 @@ export default function WorkOrderDetailPage() {
   const [activeTab, setActiveTab] = useState<'lineItems' | 'parts' | 'comments'>('lineItems');
   const [parts, setParts] = useState<any[]>([]);
   const [showPartPicker, setShowPartPicker] = useState(false);
+  const [showAdjustModal, setShowAdjustModal] = useState(false);
+  const [selectedTimeEntry, setSelectedTimeEntry] = useState<TimeEntry | null>(null);
 
   const fetchData = async () => {
     try {
@@ -192,6 +197,17 @@ export default function WorkOrderDetailPage() {
       console.error('Error adding part:', error);
       alert('Failed to add part');
     }
+  };
+
+  const handleAdjustTime = (entry: TimeEntry) => {
+    setSelectedTimeEntry(entry);
+    setShowAdjustModal(true);
+  };
+
+  const handleAdjustComplete = () => {
+    setShowAdjustModal(false);
+    setSelectedTimeEntry(null);
+    fetchData();
   };
 
   const toggleExpanded = (itemId: string) => {
@@ -589,8 +605,18 @@ export default function WorkOrderDetailPage() {
                         >
                           <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                             <div className="flex-1 min-w-0">
-                              <div className="text-xs md:text-sm font-medium text-gray-900">
-                                {entry.user.name}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <div className="text-xs md:text-sm font-medium text-gray-900">
+                                  {entry.user.name}
+                                </div>
+                                {entry.editedAt && (
+                                  <span
+                                    className="px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 cursor-help"
+                                    title={`Edited on ${new Date(entry.editedAt).toLocaleString()}\nReason: ${entry.editedReason}`}
+                                  >
+                                    EDITED
+                                  </span>
+                                )}
                               </div>
                               <div className="text-xs text-gray-500 break-words">
                                 {new Date(entry.startTs).toLocaleString('en-US', {
@@ -615,6 +641,11 @@ export default function WorkOrderDetailPage() {
                                   <span className="font-medium">Notes:</span> {entry.notes}
                                 </div>
                               )}
+                              {entry.editedReason && (
+                                <div className="text-xs md:text-sm text-gray-700 mt-1 break-words">
+                                  <span className="font-medium">Edit Reason:</span> {entry.editedReason}
+                                </div>
+                              )}
                             </div>
                             <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-1">
                               <div className="text-sm md:text-base font-semibold text-gray-900 whitespace-nowrap">
@@ -627,6 +658,14 @@ export default function WorkOrderDetailPage() {
                               >
                                 {entry.approvalState}
                               </span>
+                              {['MANAGER', 'ADMIN'].includes(user.role) && entry.approvalState !== 'LOCKED' && (
+                                <button
+                                  onClick={() => handleAdjustTime(entry)}
+                                  className="text-xs text-blue-600 hover:text-blue-800 whitespace-nowrap"
+                                >
+                                  Adjust Time
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -687,6 +726,14 @@ export default function WorkOrderDetailPage() {
         <PartPickerModal
           onSelect={handleAddPart}
           onClose={() => setShowPartPicker(false)}
+        />
+      )}
+
+      {showAdjustModal && selectedTimeEntry && (
+        <AdjustTimeModal
+          timeEntry={selectedTimeEntry}
+          onClose={() => setShowAdjustModal(false)}
+          onAdjusted={handleAdjustComplete}
         />
       )}
     </div>
