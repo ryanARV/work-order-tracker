@@ -7,7 +7,11 @@
       "Bash(vercel:*)",
       "Bash(npx prisma migrate deploy:*)",
       "Bash(set:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(git push:*)",
+      "Bash(gh:*)",
+      "Bash(winget install:*)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

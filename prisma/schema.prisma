@@ -14,10 +14,19 @@ enum UserRole {
 
 enum WorkOrderStatus {
   DRAFT
+  PENDING
   OPEN
   IN_PROGRESS
+  ON_HOLD_PARTS
+  ON_HOLD_DELAY
   READY_TO_BILL
+  QC
   CLOSED
+}
+
+enum BillType {
+  CUSTOMER_PAY
+  WARRANTY
 }
 
 enum LineItemStatus {
@@ -77,15 +86,16 @@ model Customer {
 }
 
 model WorkOrder {
-  id         String           @id @default(cuid())
-  woNumber   String           @unique @map("wo_number")
-  customerId String           @map("customer_id")
-  status     WorkOrderStatus  @default(DRAFT)
-  priority   String?
-  createdAt  DateTime         @default(now()) @map("created_at")
-  updatedAt  DateTime         @updatedAt @map("updated_at")
-  closedAt   DateTime?        @map("closed_at")
-  deletedAt  DateTime?        @map("deleted_at")
+  id                          String           @id @default(cuid())
+  woNumber                    String           @unique @map("wo_number")
+  customerId                  String           @map("customer_id")
+  status                      WorkOrderStatus  @default(DRAFT)
+  priority                    String?
+  warrantyAuthorizationNumber String?          @map("warranty_authorization_number")
+  createdAt                   DateTime         @default(now()) @map("created_at")
+  updatedAt                   DateTime         @updatedAt @map("updated_at")
+  closedAt                    DateTime?        @map("closed_at")
+  deletedAt                   DateTime?        @map("deleted_at")
 
   customer    Customer     @relation(fields: [customerId], references: [id])
   lineItems   LineItem[]
@@ -101,6 +111,9 @@ model LineItem {
   id              String         @id @default(cuid())
   workOrderId     String         @map("work_order_id")
   description     String
+  complaint       String?        @db.Text
+  correction      String?        @db.Text
+  billType        BillType?      @map("bill_type")
   billable        Boolean        @default(true)
   estimateMinutes Int?           @map("estimate_minutes")
   status          LineItemStatus @default(OPEN)
@@ -116,6 +129,7 @@ model LineItem {
 
   @@index([workOrderId])
   @@index([status])
+  @@index([billType])
   @@index([deletedAt])
   @@map("line_items")
 }
@@ -143,6 +157,7 @@ model TimeEntry {
   endTs           DateTime?     @map("end_ts")
   durationSeconds Int?          @map("duration_seconds")
   notes           String?
+  pauseReason     String?       @map("pause_reason")
   approvalState   ApprovalState @default(DRAFT) @map("approval_state")
   approvedById    String?       @map("approved_by")
   approvedAt      DateTime?     @map("approved_at")
