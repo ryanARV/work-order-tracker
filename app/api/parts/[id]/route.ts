@@ -32,8 +32,14 @@ export async function GET(
 
     const partWithAvailable = {
       ...part,
+      unitCost: Number(part.unitCost),
+      unitPrice: Number(part.unitPrice),
       quantityAvailable: part.quantityOnHand - part.quantityReserved,
       isLowStock: part.quantityOnHand - part.quantityReserved <= part.reorderLevel,
+      transactions: part.transactions.map(t => ({
+        ...t,
+        unitCost: Number(t.unitCost),
+      })),
     };
 
     return NextResponse.json({ part: partWithAvailable });
@@ -102,7 +108,14 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({ part });
+    // Convert Decimals to numbers for JSON response
+    const partResponse = {
+      ...part,
+      unitCost: Number(part.unitCost),
+      unitPrice: Number(part.unitPrice),
+    };
+
+    return NextResponse.json({ part: partResponse });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -21,7 +21,8 @@
       "Bash(npm run prisma:seed:*)",
       "Bash(git rm:*)",
       "Bash($env:DATABASE_URL=\"postgresql://postgres:LfWx5d2MAZ0vJIY@db.enwmtwlpykmrrkzdbzyg.supabase.co:5432/postgres\")",
-      "Bash(npx prisma db seed:*)"
+      "Bash(npx prisma db seed:*)",
+      "Bash(npx vercel:*)"
     ]
   }
 }

@@ -26,9 +26,11 @@ export async function GET(request: NextRequest) {
       orderBy: { partNumber: 'asc' },
     });
 
-    // Calculate available quantity for each part
+    // Calculate available quantity for each part and convert Decimals to numbers
     let partsWithAvailable = parts.map((part) => ({
       ...part,
+      unitCost: Number(part.unitCost),
+      unitPrice: Number(part.unitPrice),
       quantityAvailable: part.quantityOnHand - part.quantityReserved,
       isLowStock: part.quantityOnHand - part.quantityReserved <= part.reorderLevel,
     }));
@@ -112,7 +114,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ part }, { status: 201 });
+    // Convert Decimals to numbers for JSON response
+    const partResponse = {
+      ...part,
+      unitCost: Number(part.unitCost),
+      unitPrice: Number(part.unitPrice),
+    };
+
+    return NextResponse.json({ part: partResponse }, { status: 201 });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
