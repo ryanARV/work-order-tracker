@@ -349,6 +349,15 @@ NODE_ENV="production"
 npx prisma migrate deploy
 ```
 
+### Vercel Deployment
+
+For Vercel with Supabase integration, the following environment variables are automatically created:
+- `POSTGRES_PRISMA_URL` - Connection pooling URL (used by Prisma)
+- `POSTGRES_URL_NON_POOLING` - Direct connection URL (used for migrations)
+
+Additional required environment variables:
+- `NEXTAUTH_SECRET` - Authentication secret (must be added manually)
+
 ## Future Enhancements (Phase 2+)
 
 **Phase 1 Complete ✓**
