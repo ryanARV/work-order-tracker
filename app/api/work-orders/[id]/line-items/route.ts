@@ -10,7 +10,7 @@ export async function POST(
   try {
     const user = await requireAuth();
     const { id } = await params;
-    const { description, estimateMinutes, billable, assignedUserIds } = await request.json();
+    const { description, complaint, correction, billType, estimateMinutes, billable, assignedUserIds } = await request.json();
 
     if (!description) {
       return NextResponse.json(
@@ -46,6 +46,9 @@ export async function POST(
         data: {
           workOrderId: id,
           description,
+          complaint: complaint || null,
+          correction: correction || null,
+          billType: billType || null,
           estimateMinutes: estimateMinutes || null,
           billable: billable !== false, // Default to true
           sortOrder: nextSortOrder,
@@ -72,6 +75,9 @@ export async function POST(
           actorId: user.id,
           after: {
             description,
+            complaint,
+            correction,
+            billType,
             estimateMinutes,
             billable,
             assignedUserIds,

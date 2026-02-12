@@ -21,6 +21,9 @@ export default function AddLineItemModal({
 }: AddLineItemModalProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [description, setDescription] = useState('');
+  const [complaint, setComplaint] = useState('');
+  const [correction, setCorrection] = useState('');
+  const [billType, setBillType] = useState<'CUSTOMER_PAY' | 'WARRANTY' | ''>('');
   const [estimateMinutes, setEstimateMinutes] = useState('');
   const [billable, setBillable] = useState(true);
   const [assignedUserIds, setAssignedUserIds] = useState<string[]>([]);
@@ -53,6 +56,9 @@ export default function AddLineItemModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           description,
+          complaint: complaint || null,
+          correction: correction || null,
+          billType: billType || null,
           estimateMinutes: estimateMinutes ? parseInt(estimateMinutes) : null,
           billable,
           assignedUserIds,
@@ -107,6 +113,47 @@ export default function AddLineItemModal({
               className="input-field"
               rows={3}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Customer Complaint
+            </label>
+            <textarea
+              value={complaint}
+              onChange={(e) => setComplaint(e.target.value)}
+              placeholder="What issue did the customer report?"
+              className="input-field"
+              rows={2}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Correction / Work Performed
+            </label>
+            <textarea
+              value={correction}
+              onChange={(e) => setCorrection(e.target.value)}
+              placeholder="What was done to resolve the issue?"
+              className="input-field"
+              rows={2}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Bill Type
+            </label>
+            <select
+              value={billType}
+              onChange={(e) => setBillType(e.target.value as 'CUSTOMER_PAY' | 'WARRANTY' | '')}
+              className="input-field"
+            >
+              <option value="">Select bill type...</option>
+              <option value="CUSTOMER_PAY">Customer Pay</option>
+              <option value="WARRANTY">Warranty</option>
+            </select>
           </div>
 
           <div>
