@@ -101,10 +101,30 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="text-sm text-gray-600 text-center">
-            <p className="font-medium">Demo Credentials:</p>
-            <p>Admin: admin@example.com / admin123</p>
-            <p>Tech: tech1@example.com / tech123</p>
+          <div className="mt-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <p className="font-semibold text-gray-900 mb-3 text-center">Demo Credentials</p>
+            <div className="space-y-2 text-xs">
+              <div className="bg-white rounded p-2 border border-gray-200">
+                <p className="font-medium text-gray-700">Admin (Full Access)</p>
+                <p className="text-gray-600">admin@example.com / admin123</p>
+              </div>
+              <div className="bg-white rounded p-2 border border-gray-200">
+                <p className="font-medium text-gray-700">Service Writer</p>
+                <p className="text-gray-600">writer@example.com / writer123</p>
+              </div>
+              <div className="bg-white rounded p-2 border border-gray-200">
+                <p className="font-medium text-gray-700">Parts Manager</p>
+                <p className="text-gray-600">parts@example.com / parts123</p>
+              </div>
+              <div className="bg-white rounded p-2 border border-gray-200">
+                <p className="font-medium text-gray-700">Technician</p>
+                <p className="text-gray-600">tech1@example.com / tech123</p>
+              </div>
+              <div className="bg-white rounded p-2 border border-gray-200">
+                <p className="font-medium text-gray-700">Manager (Reports & Approvals)</p>
+                <p className="text-gray-600">manager@example.com / manager123</p>
+              </div>
+            </div>
           </div>
         </form>
       </div>
