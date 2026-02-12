@@ -267,37 +267,35 @@ export default function WorkOrderDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar user={user} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-8">
+        <div className="mb-4 md:mb-6">
           <button
             onClick={() => router.back()}
-            className="text-blue-600 hover:text-blue-800 mb-4"
+            className="text-blue-600 hover:text-blue-800 mb-3 md:mb-4 text-sm md:text-base"
           >
             ← Back to Work Orders
           </button>
 
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
+              <div className="flex-1">
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
                   {workOrder.woNumber}
                 </h1>
-                <p className="text-lg text-gray-700">{workOrder.customer.name}</p>
+                <p className="text-base md:text-lg text-gray-700">{workOrder.customer.name}</p>
                 {workOrder.customer.billingInfo && (
-                  <p className="text-sm text-gray-500">{workOrder.customer.billingInfo}</p>
+                  <p className="text-xs md:text-sm text-gray-500">{workOrder.customer.billingInfo}</p>
                 )}
               </div>
-              <div className="text-right">
-                <div className="mb-2">
-                  <span
-                    className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(workOrder.status)}`}
-                  >
-                    {workOrder.status.replace(/_/g, ' ')}
-                  </span>
-                </div>
+              <div className="flex gap-2 flex-wrap">
+                <span
+                  className={`px-2 md:px-3 py-1 text-xs md:text-sm font-semibold rounded-full ${getStatusColor(workOrder.status)}`}
+                >
+                  {workOrder.status.replace(/_/g, ' ')}
+                </span>
                 {workOrder.priority && (
                   <span
-                    className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                    className={`px-2 md:px-3 py-1 text-xs md:text-sm font-semibold rounded-full ${
                       workOrder.priority === 'HIGH'
                         ? 'bg-red-100 text-red-800'
                         : workOrder.priority === 'MEDIUM'
@@ -311,23 +309,23 @@ export default function WorkOrderDetailPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-3 gap-2 md:gap-4 p-3 md:p-4 bg-gray-50 rounded-lg">
               <div>
-                <div className="text-sm text-gray-600">Estimate</div>
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-xs md:text-sm text-gray-600">Estimate</div>
+                <div className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
                   {formatMinutes(totals?.estimateMinutes)}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Tracked</div>
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-xs md:text-sm text-gray-600">Tracked</div>
+                <div className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
                   {formatMinutes(totals?.trackedMinutes)}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Variance</div>
+                <div className="text-xs md:text-sm text-gray-600">Variance</div>
                 <div
-                  className={`text-2xl font-bold ${
+                  className={`text-lg md:text-xl lg:text-2xl font-bold ${
                     totals?.varianceMinutes > 0 ? 'text-red-600' : 'text-green-600'
                   }`}
                 >
@@ -338,59 +336,62 @@ export default function WorkOrderDetailPage() {
             </div>
 
             {user.role === 'ADMIN' && (
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-4 md:mt-6 flex flex-wrap gap-2 md:gap-3">
                 <button
                   onClick={handleApproveAll}
                   disabled={unapprovedCount === 0}
-                  className="btn-success disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-success disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm"
                 >
-                  Approve All Time ({unapprovedCount})
+                  Approve All ({unapprovedCount})
                 </button>
                 <button
                   onClick={handleMarkReadyToBill}
                   disabled={workOrder.status === 'READY_TO_BILL' || unapprovedCount > 0}
-                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm"
                 >
-                  Mark Ready to Bill
+                  Ready to Bill
                 </button>
 
                 {/* Export buttons - show split options if mixed bill types */}
                 {hasMixedBillTypes ? (
                   <>
-                    <button onClick={() => handleExportPDFByType('CUSTOMER_PAY')} className="btn-secondary">
-                      Export PDF (Customer Pay)
+                    <button onClick={() => handleExportPDFByType('CUSTOMER_PAY')} className="btn-secondary text-xs md:text-sm">
+                      PDF (Cust.)
                     </button>
-                    <button onClick={() => handleExportPDFByType('WARRANTY')} className="btn-secondary">
-                      Export PDF (Warranty)
+                    <button onClick={() => handleExportPDFByType('WARRANTY')} className="btn-secondary text-xs md:text-sm">
+                      PDF (Warr.)
                     </button>
                   </>
                 ) : hasCustomerPay ? (
-                  <button onClick={() => handleExportPDFByType('CUSTOMER_PAY')} className="btn-secondary">
-                    Export PDF (Customer Pay)
+                  <button onClick={() => handleExportPDFByType('CUSTOMER_PAY')} className="btn-secondary text-xs md:text-sm">
+                    <span className="hidden md:inline">Export PDF (Customer Pay)</span>
+                    <span className="md:hidden">PDF</span>
                   </button>
                 ) : hasWarranty ? (
-                  <button onClick={() => handleExportPDFByType('WARRANTY')} className="btn-secondary">
-                    Export PDF (Warranty)
+                  <button onClick={() => handleExportPDFByType('WARRANTY')} className="btn-secondary text-xs md:text-sm">
+                    <span className="hidden md:inline">Export PDF (Warranty)</span>
+                    <span className="md:hidden">PDF</span>
                   </button>
                 ) : (
-                  <button onClick={handleExportPDF} className="btn-secondary">
-                    Export PDF
+                  <button onClick={handleExportPDF} className="btn-secondary text-xs md:text-sm">
+                    <span className="hidden md:inline">Export PDF</span>
+                    <span className="md:hidden">PDF</span>
                   </button>
                 )}
 
-                <button onClick={handleExportCSV} className="btn-secondary">
-                  Export CSV
+                <button onClick={handleExportCSV} className="btn-secondary text-xs md:text-sm">
+                  CSV
                 </button>
               </div>
             )}
           </div>
         </div>
 
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Line Items</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-900">Line Items</h2>
           <button
             onClick={() => setShowAddLineItemModal(true)}
-            className="btn-primary text-sm"
+            className="btn-primary text-xs md:text-sm whitespace-nowrap"
           >
             + Add Line Item
           </button>
@@ -398,28 +399,28 @@ export default function WorkOrderDetailPage() {
 
         {/* Bulk Actions Bar */}
         {user.role === 'ADMIN' && selectedItems.size > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex justify-between items-center">
-            <div className="text-sm text-blue-900">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4 mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="text-xs md:text-sm text-blue-900">
               {selectedItems.size} item{selectedItems.size > 1 ? 's' : ''} selected
             </div>
-            <div className="flex space-x-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleBulkMarkDone}
-                className="btn-success text-sm"
+                className="btn-success text-xs md:text-sm"
               >
                 Mark as Done
               </button>
               <button
                 onClick={() => setSelectedItems(new Set())}
-                className="btn-secondary text-sm"
+                className="btn-secondary text-xs md:text-sm"
               >
-                Clear Selection
+                Clear
               </button>
             </div>
           </div>
         )}
 
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {workOrder.lineItems.map((item) => {
             const totalMinutes = item.timeEntries.reduce(
               (sum, e) => sum + Math.floor((e.durationSeconds || 0) / 60),
@@ -429,9 +430,9 @@ export default function WorkOrderDetailPage() {
 
             return (
               <div key={item.id} className="bg-white shadow-md rounded-lg overflow-hidden">
-                <div className="p-4 hover:bg-gray-50">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-start space-x-3 flex-1">
+                <div className="p-3 md:p-4 hover:bg-gray-50">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex items-start space-x-2 md:space-x-3 flex-1 min-w-0">
                       {user.role === 'ADMIN' && (
                         <input
                           type="checkbox"
@@ -440,46 +441,51 @@ export default function WorkOrderDetailPage() {
                             e.stopPropagation();
                             toggleSelectItem(item.id);
                           }}
-                          className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          className="mt-1 h-4 w-4 flex-shrink-0 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
                       )}
-                      <div className="flex-1 cursor-pointer" onClick={() => toggleExpanded(item.id)}>
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="font-semibold text-gray-900">{item.description}</h3>
+                      <div className="flex-1 cursor-pointer min-w-0" onClick={() => toggleExpanded(item.id)}>
+                        <div className="flex flex-wrap items-center gap-1 md:gap-2 mb-1">
+                          <h3 className="font-semibold text-sm md:text-base text-gray-900 break-words">{item.description}</h3>
                         {item.status === 'DONE' && (
-                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800 whitespace-nowrap">
                             DONE
                           </span>
                         )}
                         {!item.billable && (
-                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                            NON-BILLABLE
+                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 whitespace-nowrap">
+                            NON-BILL
                           </span>
                         )}
                         {item.billType && (
-                          <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                          <span className={`px-2 py-0.5 text-xs font-semibold rounded-full whitespace-nowrap ${
                             item.billType === 'WARRANTY'
                               ? 'bg-orange-100 text-orange-800'
                               : 'bg-blue-100 text-blue-800'
                           }`}>
-                            {item.billType === 'WARRANTY' ? 'WARRANTY' : 'CUSTOMER PAY'}
+                            {item.billType === 'WARRANTY' ? 'WARR' : 'CUST'}
                           </span>
                         )}
                       </div>
-                        <div className="text-sm text-gray-600">
-                          Estimate: {formatMinutes(item.estimateMinutes)} | Tracked:{' '}
-                          {formatMinutes(totalMinutes)} | Entries: {item.timeEntries.length}
+                        <div className="text-xs md:text-sm text-gray-600">
+                          <span className="hidden md:inline">
+                            Estimate: {formatMinutes(item.estimateMinutes)} | Tracked:{' '}
+                            {formatMinutes(totalMinutes)} | Entries: {item.timeEntries.length}
+                          </span>
+                          <span className="md:hidden">
+                            Est: {formatMinutes(item.estimateMinutes)} | Track: {formatMinutes(totalMinutes)}
+                          </span>
                         </div>
                         {(item.complaint || item.correction) && (
-                          <div className="mt-2 space-y-1 text-sm">
+                          <div className="mt-2 space-y-1 text-xs md:text-sm">
                             {item.complaint && (
-                              <div>
+                              <div className="break-words">
                                 <span className="font-medium text-gray-700">Complaint:</span>
                                 <span className="text-gray-600 ml-1">{item.complaint}</span>
                               </div>
                             )}
                             {item.correction && (
-                              <div>
+                              <div className="break-words">
                                 <span className="font-medium text-gray-700">Correction:</span>
                                 <span className="text-gray-600 ml-1">{item.correction}</span>
                               </div>
@@ -488,47 +494,55 @@ export default function WorkOrderDetailPage() {
                         )}
                       </div>
                     </div>
-                    <div className="text-gray-400 cursor-pointer" onClick={() => toggleExpanded(item.id)}>
+                    <div className="text-gray-400 cursor-pointer text-lg md:text-xl flex-shrink-0 pt-1" onClick={() => toggleExpanded(item.id)}>
                       {isExpanded ? '▼' : '▶'}
                     </div>
                   </div>
                 </div>
 
                 {isExpanded && item.timeEntries.length > 0 && (
-                  <div className="border-t border-gray-200 p-4 bg-gray-50">
+                  <div className="border-t border-gray-200 p-3 md:p-4 bg-gray-50">
                     <div className="space-y-2">
                       {item.timeEntries.map((entry) => (
                         <div
                           key={entry.id}
-                          className="bg-white p-3 rounded border border-gray-200"
+                          className="bg-white p-2 md:p-3 rounded border border-gray-200"
                         >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
+                          <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs md:text-sm font-medium text-gray-900">
                                 {entry.user.name}
                               </div>
-                              <div className="text-xs text-gray-500">
-                                {new Date(entry.startTs).toLocaleString()}
+                              <div className="text-xs text-gray-500 break-words">
+                                {new Date(entry.startTs).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: 'numeric',
+                                  minute: '2-digit'
+                                })}
                                 {entry.endTs &&
-                                  ` - ${new Date(entry.endTs).toLocaleTimeString()}`}
+                                  ` - ${new Date(entry.endTs).toLocaleTimeString('en-US', {
+                                    hour: 'numeric',
+                                    minute: '2-digit'
+                                  })}`}
                               </div>
                               {entry.pauseReason && (
-                                <div className="text-sm text-gray-700 mt-1">
-                                  <span className="font-medium">Pause Reason:</span> {entry.pauseReason}
+                                <div className="text-xs md:text-sm text-gray-700 mt-1 break-words">
+                                  <span className="font-medium">Pause:</span> {entry.pauseReason}
                                 </div>
                               )}
                               {entry.notes && (
-                                <div className="text-sm text-gray-700 mt-1">
+                                <div className="text-xs md:text-sm text-gray-700 mt-1 break-words">
                                   <span className="font-medium">Notes:</span> {entry.notes}
                                 </div>
                               )}
                             </div>
-                            <div className="text-right">
-                              <div className="text-sm font-semibold text-gray-900">
+                            <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-1">
+                              <div className="text-sm md:text-base font-semibold text-gray-900 whitespace-nowrap">
                                 {formatMinutes(entry.durationSeconds ? Math.floor(entry.durationSeconds / 60) : null)}
                               </div>
                               <span
-                                className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getApprovalColor(
+                                className={`px-2 py-0.5 text-xs font-semibold rounded-full whitespace-nowrap ${getApprovalColor(
                                   entry.approvalState
                                 )}`}
                               >
@@ -547,7 +561,7 @@ export default function WorkOrderDetailPage() {
         </div>
 
         {/* Comments Section */}
-        <div className="mt-6 bg-white shadow-md rounded-lg p-6">
+        <div className="mt-4 md:mt-6 bg-white shadow-md rounded-lg p-4 md:p-6">
           <CommentsSection workOrderId={id} currentUser={user} />
         </div>
       </div>
