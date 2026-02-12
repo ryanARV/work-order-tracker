@@ -8,6 +8,7 @@ import CommentsSection from '@/components/CommentsSection';
 import WorkOrderPartsTable from '@/components/WorkOrderPartsTable';
 import PartPickerModal from '@/components/PartPickerModal';
 import AdjustTimeModal from '@/components/AdjustTimeModal';
+import AssignTechModal from '@/components/AssignTechModal';
 
 interface User {
   id: string;
@@ -32,6 +33,15 @@ interface TimeEntry {
   };
 }
 
+interface Assignment {
+  id: string;
+  userId: string;
+  user: {
+    id: string;
+    name: string;
+  };
+}
+
 interface LineItem {
   id: string;
   description: string;
@@ -42,6 +52,7 @@ interface LineItem {
   estimateMinutes: number | null;
   status: string;
   timeEntries: TimeEntry[];
+  assignments: Assignment[];
 }
 
 interface WorkOrder {
@@ -74,6 +85,8 @@ export default function WorkOrderDetailPage() {
   const [showPartPicker, setShowPartPicker] = useState(false);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [selectedTimeEntry, setSelectedTimeEntry] = useState<TimeEntry | null>(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedLineItemForAssign, setSelectedLineItemForAssign] = useState<LineItem | null>(null);
 
   const fetchData = async () => {
     try {
@@ -208,6 +221,38 @@ export default function WorkOrderDetailPage() {
     setShowAdjustModal(false);
     setSelectedTimeEntry(null);
     fetchData();
+  };
+
+  const handleAssignTech = (lineItem: LineItem) => {
+    setSelectedLineItemForAssign(lineItem);
+    setShowAssignModal(true);
+  };
+
+  const handleAssignSuccess = () => {
+    setShowAssignModal(false);
+    setSelectedLineItemForAssign(null);
+    fetchData();
+  };
+
+  const handleUnassignTech = async (lineItemId: string, userId: string) => {
+    if (!confirm('Remove this technician from this task?')) return;
+
+    try {
+      const res = await fetch(`/api/line-items/${lineItemId}/assign?userId=${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || 'Failed to unassign technician');
+        return;
+      }
+
+      fetchData();
+    } catch (error) {
+      console.error('Error unassigning tech:', error);
+      alert('Failed to unassign technician');
+    }
   };
 
   const toggleExpanded = (itemId: string) => {
@@ -587,6 +632,59 @@ export default function WorkOrderDetailPage() {
                             )}
                           </div>
                         )}
+
+                        {/* Assigned Technicians */}
+                        {item.assignments && item.assignments.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1 items-center">
+                            <span className="text-xs font-medium text-gray-700">Assigned:</span>
+                            {item.assignments.map((assignment) => (
+                              <span
+                                key={assignment.id}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
+                              >
+                                {assignment.user.name}
+                                {['SERVICE_WRITER', 'ADMIN', 'MANAGER'].includes(user.role) && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUnassignTech(item.id, assignment.userId);
+                                    }}
+                                    className="ml-1 text-blue-600 hover:text-blue-800 font-bold"
+                                    title="Unassign"
+                                  >
+                                    ×
+                                  </button>
+                                )}
+                              </span>
+                            ))}
+                            {['SERVICE_WRITER', 'ADMIN', 'MANAGER'].includes(user.role) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAssignTech(item);
+                                }}
+                                className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1"
+                              >
+                                + Assign Tech
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Show Assign button if no assignments */}
+                        {(!item.assignments || item.assignments.length === 0) && ['SERVICE_WRITER', 'ADMIN', 'MANAGER'].includes(user.role) && (
+                          <div className="mt-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAssignTech(item);
+                              }}
+                              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                              + Assign Technician
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="text-gray-400 cursor-pointer text-lg md:text-xl flex-shrink-0 pt-1" onClick={() => toggleExpanded(item.id)}>
@@ -734,6 +832,15 @@ export default function WorkOrderDetailPage() {
           timeEntry={selectedTimeEntry}
           onClose={() => setShowAdjustModal(false)}
           onAdjusted={handleAdjustComplete}
+        />
+      )}
+
+      {showAssignModal && selectedLineItemForAssign && (
+        <AssignTechModal
+          lineItemId={selectedLineItemForAssign.id}
+          currentAssignments={selectedLineItemForAssign.assignments || []}
+          onClose={() => setShowAssignModal(false)}
+          onSuccess={handleAssignSuccess}
         />
       )}
     </div>
