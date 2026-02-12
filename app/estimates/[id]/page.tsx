@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
 
 interface Estimate {
   id: string;
@@ -250,11 +251,14 @@ export default function EstimateDetailPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-4 md:mb-6">
+          <Breadcrumb
+            items={[
+              { label: 'Estimates', href: '/estimates' },
+              { label: estimate.estimateNumber },
+            ]}
+          />
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <div>
-              <Link href="/estimates" className="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">
-                ← Back to Estimates
-              </Link>
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{estimate.estimateNumber}</h1>
               <p className="text-sm md:text-base text-gray-600 mt-1">{estimate.customer.name}</p>
             </div>

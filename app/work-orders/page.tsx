@@ -82,25 +82,25 @@ export default function WorkOrdersPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFT':
-        return 'bg-gray-100 text-gray-800';
+        return 'badge-gray';
       case 'PENDING':
-        return 'bg-slate-100 text-slate-800';
+        return 'badge-gray';
       case 'OPEN':
-        return 'bg-blue-100 text-blue-800';
+        return 'badge-blue';
       case 'IN_PROGRESS':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'badge-yellow';
       case 'ON_HOLD_PARTS':
-        return 'bg-orange-100 text-orange-800';
+        return 'badge-orange';
       case 'ON_HOLD_DELAY':
-        return 'bg-amber-100 text-amber-800';
+        return 'badge-orange';
       case 'READY_TO_BILL':
-        return 'bg-purple-100 text-purple-800';
+        return 'badge-purple';
       case 'QC':
-        return 'bg-indigo-100 text-indigo-800';
+        return 'badge-blue';
       case 'CLOSED':
-        return 'bg-green-100 text-green-800';
+        return 'badge-green';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'badge-gray';
     }
   };
 
@@ -110,8 +110,11 @@ export default function WorkOrdersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading work orders...</p>
+        </div>
       </div>
     );
   }
@@ -124,21 +127,24 @@ export default function WorkOrdersPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar user={user} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Work Orders</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+          <div>
+            <h1 className="section-header">Work Orders</h1>
+            <p className="section-subheader">Manage and track all work orders</p>
+          </div>
           {user.role === 'ADMIN' && (
             <button
               onClick={() => setShowCreateModal(true)}
               className="btn-primary"
             >
-              + Create Work Order
+              <span className="text-lg mr-2">+</span> Create Work Order
             </button>
           )}
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white shadow-md rounded-lg p-4 mb-6">
+        <div className="card mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -206,35 +212,51 @@ export default function WorkOrdersPage() {
         </div>
 
         {workOrders.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No work orders found</p>
+          <div className="card text-center py-16">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">📋</span>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No work orders found</h3>
+            <p className="text-gray-500 mb-6">
+              {searchQuery || statusFilter || priorityFilter
+                ? 'Try adjusting your filters to see more results'
+                : 'Get started by creating your first work order'}
+            </p>
+            {user.role === 'ADMIN' && !searchQuery && !statusFilter && !priorityFilter && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="btn-primary"
+              >
+                <span className="text-lg mr-2">+</span> Create Work Order
+              </button>
+            )}
           </div>
         ) : (
-          <div className="bg-white shadow-md rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="card overflow-hidden p-0">
+            <table className="min-w-full">
+              <thead className="table-header">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider">
                     WO Number
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider">
                     Customer
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider">
                     Priority
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider">
                     Line Items
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider">
                     Created
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white">
                 {workOrders.map((wo) => {
                   const doneCount = wo.lineItems.filter(
                     (li) => li.status === 'DONE'
@@ -245,36 +267,30 @@ export default function WorkOrdersPage() {
                     <tr
                       key={wo.id}
                       onClick={() => router.push(`/work-orders/${wo.id}`)}
-                      className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      className="table-row cursor-pointer"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-blue-600">
+                      <td className="table-cell">
+                        <div className="font-semibold text-blue-600 hover:text-blue-700">
                           {wo.woNumber}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {wo.customer.name}
-                        </div>
+                      <td className="table-cell">
+                        <div className="font-medium">{wo.customer.name}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                            wo.status
-                          )}`}
-                        >
+                      <td className="table-cell">
+                        <span className={`badge ${getStatusColor(wo.status)}`}>
                           {formatStatus(wo.status)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="table-cell">
                         {wo.priority ? (
                           <span
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            className={`badge ${
                               wo.priority === 'HIGH'
-                                ? 'bg-red-100 text-red-800'
+                                ? 'badge-red'
                                 : wo.priority === 'MEDIUM'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-green-100 text-green-800'
+                                ? 'badge-yellow'
+                                : 'badge-green'
                             }`}
                           >
                             {wo.priority}
@@ -283,10 +299,12 @@ export default function WorkOrdersPage() {
                           <span className="text-sm text-gray-400">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {doneCount} / {totalCount}
+                      <td className="table-cell">
+                        <span className="font-medium">
+                          {doneCount} / {totalCount}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="table-cell text-gray-600">
                         {new Date(wo.createdAt).toLocaleDateString()}
                       </td>
                     </tr>

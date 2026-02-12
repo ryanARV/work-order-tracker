@@ -93,6 +93,12 @@ export default function Navbar({ user }: NavbarProps) {
                   Parts
                 </a>
                 <a
+                  href="/reports"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Reports
+                </a>
+                <a
                   href="/admin/exceptions"
                   className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
@@ -134,6 +140,12 @@ export default function Navbar({ user }: NavbarProps) {
                   className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
                   Parts
+                </a>
+                <a
+                  href="/reports"
+                  className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Reports
                 </a>
                 <a
                   href="/admin/exceptions"
@@ -190,6 +202,12 @@ export default function Navbar({ user }: NavbarProps) {
                 >
                   Parts
                 </a>
+                <a
+                  href="/reports"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Reports
+                </a>
               </div>
             </div>
           </div>
@@ -226,6 +244,12 @@ export default function Navbar({ user }: NavbarProps) {
                   className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
                   Parts
+                </a>
+                <a
+                  href="/reports"
+                  className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Reports
                 </a>
                 <div className="pt-2 mt-2 border-t border-blue-600">
                   <div className="px-3 py-2 text-sm">
@@ -270,6 +294,12 @@ export default function Navbar({ user }: NavbarProps) {
                 >
                   Parts
                 </a>
+                <a
+                  href="/reports"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Reports
+                </a>
               </div>
             </div>
           </div>
@@ -300,6 +330,12 @@ export default function Navbar({ user }: NavbarProps) {
                   className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
                   Parts
+                </a>
+                <a
+                  href="/reports"
+                  className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Reports
                 </a>
                 <div className="pt-2 mt-2 border-t border-blue-600">
                   <div className="px-3 py-2 text-sm">

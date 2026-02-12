@@ -168,16 +168,18 @@ export default function KanbanBoardPage() {
     setSelectedCard(null);
   };
 
-  const getPriorityColor = (priority: string | null) => {
-    switch (priority?.toUpperCase()) {
+  const getPriorityBadge = (priority: string | null) => {
+    if (!priority) return null;
+
+    switch (priority.toUpperCase()) {
       case 'HIGH':
-        return 'text-red-600';
+        return 'badge-red';
       case 'MEDIUM':
-        return 'text-yellow-600';
+        return 'badge-yellow';
       case 'LOW':
-        return 'text-green-600';
+        return 'badge-green';
       default:
-        return 'text-gray-600';
+        return 'badge-gray';
     }
   };
 
@@ -185,19 +187,19 @@ export default function KanbanBoardPage() {
     switch (status) {
       case 'ALL_ISSUED':
         return (
-          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+          <span className="badge badge-green">
             ✓ Parts Ready
           </span>
         );
       case 'PARTIALLY_ISSUED':
         return (
-          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">
+          <span className="badge badge-yellow">
             ⚠ Parts Partial
           </span>
         );
       case 'NOT_ISSUED':
         return (
-          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-medium">
+          <span className="badge badge-red">
             ✗ Waiting Parts
           </span>
         );
@@ -210,9 +212,10 @@ export default function KanbanBoardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">Loading...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading kanban board...</p>
         </div>
       </div>
     );
@@ -220,19 +223,19 @@ export default function KanbanBoardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
-      <div className="mb-4 md:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Work Order Board</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1">
-            <span className="hidden md:inline">Drag cards to update status</span>
+          <h1 className="section-header">Work Order Board</h1>
+          <p className="section-subheader">
+            <span className="hidden md:inline">Drag and drop cards to update status</span>
             <span className="md:hidden">Tap card, then tap column to move</span>
           </p>
         </div>
         <Link
           href="/work-orders"
-          className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm md:text-base whitespace-nowrap"
+          className="btn-secondary whitespace-nowrap"
         >
-          List View
+          ← List View
         </Link>
       </div>
 
@@ -262,15 +265,15 @@ export default function KanbanBoardPage() {
               onDrop={(e) => handleDrop(e, column.key)}
             >
               <div
-                className={`${column.color} rounded-lg p-2 md:p-3 mb-3 cursor-pointer transition-all ${
-                  selectedCard ? 'hover:ring-2 hover:ring-blue-400' : ''
+                className={`${column.color} rounded-lg p-3 mb-3 cursor-pointer transition-all shadow-sm ${
+                  selectedCard ? 'hover:ring-2 hover:ring-blue-500 hover:shadow-md' : ''
                 }`}
                 onClick={() => selectedCard && handleColumnClick(column.key)}
               >
-                <h2 className="font-semibold text-gray-800 flex justify-between items-center text-sm md:text-base">
+                <h2 className="font-bold text-gray-900 flex justify-between items-center text-sm md:text-base">
                   <span className="md:hidden">{column.shortTitle}</span>
                   <span className="hidden md:inline">{column.title}</span>
-                  <span className="bg-white px-2 py-1 rounded text-xs md:text-sm font-bold">
+                  <span className="bg-white px-2.5 py-1 rounded-full text-xs md:text-sm font-bold shadow-sm">
                     {cards.length}
                   </span>
                 </h2>
@@ -283,26 +286,22 @@ export default function KanbanBoardPage() {
                     draggable
                     onDragStart={(e) => handleDragStart(e, card.id, column.key)}
                     onClick={() => handleCardClick(card.id, column.key)}
-                    className={`bg-white rounded-lg shadow-md p-3 md:p-4 cursor-pointer hover:shadow-lg transition-all border-l-4 ${
+                    className={`bg-white rounded-lg shadow-sm hover:shadow-md p-3 md:p-4 cursor-move transition-all border-l-4 ${
                       selectedCard?.id === card.id
-                        ? 'border-green-500 ring-2 ring-green-400'
+                        ? 'border-green-500 ring-2 ring-green-400 shadow-md'
                         : 'border-blue-500'
                     }`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <Link
                         href={`/work-orders/${card.id}`}
-                        className="font-semibold text-blue-600 hover:text-blue-800 text-sm md:text-base"
+                        className="font-bold text-blue-600 hover:text-blue-700 text-sm md:text-base"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {card.woNumber}
                       </Link>
                       {card.priority && (
-                        <span
-                          className={`text-xs font-semibold px-2 py-1 rounded ${getPriorityColor(
-                            card.priority
-                          )} bg-opacity-10`}
-                        >
+                        <span className={`badge ${getPriorityBadge(card.priority)}`}>
                           {card.priority}
                         </span>
                       )}
@@ -326,14 +325,14 @@ export default function KanbanBoardPage() {
                     </div>
 
                     {card.assignedTechs.length > 0 && (
-                      <div className="mt-2 md:mt-3 flex flex-wrap gap-1">
+                      <div className="mt-2 md:mt-3 flex flex-wrap gap-1.5">
                         {card.assignedTechs.map((tech) => (
                           <span
                             key={tech.id}
-                            className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
+                            className="badge badge-gray text-xs"
                             title={tech.name}
                           >
-                            {tech.name.split(' ')[0]}
+                            👤 {tech.name.split(' ')[0]}
                           </span>
                         ))}
                       </div>

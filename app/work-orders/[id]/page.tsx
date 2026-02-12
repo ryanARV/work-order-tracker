@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import Breadcrumb from '@/components/Breadcrumb';
 import AddLineItemModal from '@/components/AddLineItemModal';
 import CommentsSection from '@/components/CommentsSection';
 import WorkOrderPartsTable from '@/components/WorkOrderPartsTable';
@@ -370,12 +371,12 @@ export default function WorkOrderDetailPage() {
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-8">
         <div className="mb-4 md:mb-6">
-          <button
-            onClick={() => router.back()}
-            className="text-blue-600 hover:text-blue-800 mb-3 md:mb-4 text-sm md:text-base"
-          >
-            ← Back to Work Orders
-          </button>
+          <Breadcrumb
+            items={[
+              { label: 'Work Orders', href: '/work-orders' },
+              { label: workOrder.woNumber },
+            ]}
+          />
 
           <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
             <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">

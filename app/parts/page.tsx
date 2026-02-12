@@ -83,9 +83,10 @@ export default function PartsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">Loading...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading parts catalog...</p>
         </div>
       </div>
     );
@@ -95,144 +96,178 @@ export default function PartsPage() {
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-4 md:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Parts Catalog</h1>
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="section-header">Parts Catalog</h1>
+            <p className="section-subheader">Manage inventory and part information</p>
+          </div>
           <button
             onClick={handleAddPart}
-            className="btn-primary text-sm md:text-base whitespace-nowrap"
+            className="btn-primary whitespace-nowrap"
           >
-            + Add Part
+            <span className="text-lg mr-2">+</span> Add Part
           </button>
         </div>
 
         {/* Filters */}
-        <div className="mb-4 md:mb-6 flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="Search parts..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input-field flex-1 text-sm md:text-base"
-          />
-          <label className="flex items-center gap-2 text-sm md:text-base whitespace-nowrap cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showLowStockOnly}
-              onChange={(e) => setShowLowStockOnly(e.target.checked)}
-              className="w-4 h-4"
-            />
-            <span className="text-gray-700">Low Stock Only</span>
-          </label>
+        <div className="card mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+            <div className="flex-1 w-full">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Search
+              </label>
+              <input
+                type="text"
+                placeholder="Search by part # or description..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <label className="flex items-center gap-2 whitespace-nowrap cursor-pointer pb-2.5">
+              <input
+                type="checkbox"
+                checked={showLowStockOnly}
+                onChange={(e) => setShowLowStockOnly(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-gray-700">Show Low Stock Only</span>
+            </label>
+          </div>
+          {(search || showLowStockOnly) && (
+            <div className="mt-3">
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setShowLowStockOnly(false);
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Clear All Filters
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Parts Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Part #
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                    Description
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                    Manufacturer
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Available
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                    On Hand
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                    Price
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {parts.length === 0 ? (
+        {parts.length === 0 ? (
+          <div className="card text-center py-16">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">🔧</span>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No parts found</h3>
+            <p className="text-gray-500 mb-6">
+              {search || showLowStockOnly
+                ? 'Try adjusting your filters to see more results'
+                : 'Get started by adding your first part to the catalog'}
+            </p>
+            {!search && !showLowStockOnly && (
+              <button onClick={handleAddPart} className="btn-primary">
+                <span className="text-lg mr-2">+</span> Add Part
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="card overflow-hidden p-0">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="table-header">
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500 text-sm">
-                      {search || showLowStockOnly ? 'No parts found' : 'No parts in catalog. Click "Add Part" to get started.'}
-                    </td>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider">
+                      Part #
+                    </th>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider hidden md:table-cell">
+                      Description
+                    </th>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider hidden lg:table-cell">
+                      Manufacturer
+                    </th>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider text-right">
+                      Available
+                    </th>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider text-right hidden sm:table-cell">
+                      On Hand
+                    </th>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider text-right hidden md:table-cell">
+                      Price
+                    </th>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider text-right">
+                      Actions
+                    </th>
                   </tr>
-                ) : (
+                </thead>
+                <tbody className="bg-white">{
                   parts.map((part) => (
-                    <tr key={part.id} className="hover:bg-gray-50">
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap">
-                        <div className="text-xs md:text-sm font-medium text-gray-900">
+                    <tr key={part.id} className="table-row">
+                      <td className="table-cell">
+                        <div className="font-semibold text-gray-900">
                           {part.partNumber}
                         </div>
-                        <div className="text-xs text-gray-500 md:hidden">
+                        <div className="text-xs text-gray-500 md:hidden mt-1">
                           {part.description}
                         </div>
                       </td>
-                      <td className="px-3 md:px-6 py-4 hidden md:table-cell">
-                        <div className="text-sm text-gray-900">{part.description}</div>
+                      <td className="table-cell hidden md:table-cell">
+                        <div className="font-medium">{part.description}</div>
                       </td>
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
+                      <td className="table-cell text-gray-600 hidden lg:table-cell">
                         {part.manufacturer || '-'}
                       </td>
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap text-right">
+                      <td className="table-cell text-right">
                         <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            part.isLowStock
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-green-100 text-green-800'
+                          className={`badge ${
+                            part.isLowStock ? 'badge-red' : 'badge-green'
                           }`}
                         >
                           {part.quantityAvailable}
                         </span>
                         {part.isLowStock && (
-                          <div className="text-xs text-red-600 mt-1">
+                          <div className="text-xs text-red-600 font-medium mt-1">
                             Low Stock
                           </div>
                         )}
                       </td>
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right hidden sm:table-cell">
-                        {part.quantityOnHand}
+                      <td className="table-cell text-right hidden sm:table-cell">
+                        <span className="font-medium">{part.quantityOnHand}</span>
                         {part.quantityReserved > 0 && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 mt-0.5">
                             ({part.quantityReserved} reserved)
                           </div>
                         )}
                       </td>
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right hidden md:table-cell">
-                        ${part.unitPrice.toFixed(2)}
+                      <td className="table-cell text-right hidden md:table-cell">
+                        <span className="font-medium">${part.unitPrice.toFixed(2)}</span>
                       </td>
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="table-cell text-right">
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleEditPart(part)}
-                            className="text-blue-600 hover:text-blue-900 text-xs md:text-sm"
+                            className="text-blue-600 hover:text-blue-700 font-medium"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleAdjustInventory(part)}
-                            className="text-green-600 hover:text-green-900 text-xs md:text-sm"
+                            className="text-green-600 hover:text-green-700 font-medium"
                           >
                             Adjust
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Total Count */}
-        <div className="mt-4 text-sm text-gray-600">
-          Showing {parts.length} {parts.length === 1 ? 'part' : 'parts'}
-        </div>
+        {parts.length > 0 && (
+          <div className="mt-4 text-sm text-gray-600 font-medium">
+            Showing {parts.length} {parts.length === 1 ? 'part' : 'parts'}
+          </div>
+        )}
       </div>
 
       {/* Modals */}

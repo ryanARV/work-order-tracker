@@ -58,11 +58,11 @@ export default function EstimatesPage() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      DRAFT: 'bg-gray-100 text-gray-800',
-      PENDING_APPROVAL: 'bg-yellow-100 text-yellow-800',
-      APPROVED: 'bg-green-100 text-green-800',
-      REJECTED: 'bg-red-100 text-red-800',
-      CONVERTED: 'bg-blue-100 text-blue-800',
+      DRAFT: 'badge-gray',
+      PENDING_APPROVAL: 'badge-yellow',
+      APPROVED: 'badge-green',
+      REJECTED: 'badge-red',
+      CONVERTED: 'badge-blue',
     };
 
     const labels: Record<string, string> = {
@@ -74,31 +74,23 @@ export default function EstimatesPage() {
     };
 
     return (
-      <span
-        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-          styles[status] || 'bg-gray-100 text-gray-800'
-        }`}
-      >
+      <span className={`badge ${styles[status] || 'badge-gray'}`}>
         {labels[status] || status}
       </span>
     );
   };
 
   const getPriorityBadge = (priority: string | null) => {
-    if (!priority) return null;
+    if (!priority) return <span className="text-sm text-gray-400">-</span>;
 
     const styles: Record<string, string> = {
-      HIGH: 'bg-red-100 text-red-800',
-      MEDIUM: 'bg-yellow-100 text-yellow-800',
-      LOW: 'bg-green-100 text-green-800',
+      HIGH: 'badge-red',
+      MEDIUM: 'badge-yellow',
+      LOW: 'badge-green',
     };
 
     return (
-      <span
-        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-          styles[priority.toUpperCase()] || 'bg-gray-100 text-gray-800'
-        }`}
-      >
+      <span className={`badge ${styles[priority.toUpperCase()] || 'badge-gray'}`}>
         {priority}
       </span>
     );
@@ -119,9 +111,10 @@ export default function EstimatesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">Loading...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading estimates...</p>
         </div>
       </div>
     );
@@ -131,128 +124,167 @@ export default function EstimatesPage() {
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-4 md:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Estimates</h1>
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="section-header">Estimates</h1>
+            <p className="section-subheader">Create and manage customer estimates</p>
+          </div>
           <Link
             href="/estimates/new"
-            className="btn-primary text-sm md:text-base whitespace-nowrap"
+            className="btn-primary whitespace-nowrap"
           >
-            + New Estimate
+            <span className="text-lg mr-2">+</span> New Estimate
           </Link>
         </div>
 
         {/* Filters */}
-        <div className="mb-4 md:mb-6 flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="Search estimates..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input-field flex-1 text-sm md:text-base"
-          />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="input-field text-sm md:text-base"
-          >
-            <option value="">All Statuses</option>
-            <option value="DRAFT">Draft</option>
-            <option value="PENDING_APPROVAL">Pending Approval</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-            <option value="CONVERTED">Converted</option>
-          </select>
+        <div className="card mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Search
+              </label>
+              <input
+                type="text"
+                placeholder="Search by estimate # or customer..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="input-field"
+              >
+                <option value="">All Statuses</option>
+                <option value="DRAFT">Draft</option>
+                <option value="PENDING_APPROVAL">Pending Approval</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="CONVERTED">Converted</option>
+              </select>
+            </div>
+          </div>
+          {(search || statusFilter) && (
+            <div className="mt-3">
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setStatusFilter('');
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Clear All Filters
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Estimates Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estimate #
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                    Customer
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                    Priority
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                    Labor
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                    Parts
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <span className="hidden md:inline">Actions</span>
-                    <span className="md:hidden">•</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {estimates.length === 0 ? (
+        {estimates.length === 0 ? (
+          <div className="card text-center py-16">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">📋</span>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No estimates found</h3>
+            <p className="text-gray-500 mb-6">
+              {search || statusFilter
+                ? 'Try adjusting your filters to see more results'
+                : 'Get started by creating your first estimate'}
+            </p>
+            {!search && !statusFilter && (
+              <Link href="/estimates/new" className="btn-primary">
+                <span className="text-lg mr-2">+</span> New Estimate
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="card overflow-hidden p-0">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="table-header">
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500 text-sm">
-                      {search || statusFilter
-                        ? 'No estimates found'
-                        : 'No estimates yet. Click "New Estimate" to get started.'}
-                    </td>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider">
+                      Estimate #
+                    </th>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider hidden md:table-cell">
+                      Customer
+                    </th>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider hidden sm:table-cell">
+                      Priority
+                    </th>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider text-right hidden lg:table-cell">
+                      Labor
+                    </th>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider text-right hidden lg:table-cell">
+                      Parts
+                    </th>
+                    <th className="table-cell font-semibold text-xs text-gray-600 uppercase tracking-wider text-right">
+                      <span className="hidden md:inline">Actions</span>
+                      <span className="md:hidden">•</span>
+                    </th>
                   </tr>
-                ) : (
+                </thead>
+                <tbody className="bg-white">{
                   estimates.map((estimate) => (
-                    <tr key={estimate.id} className="hover:bg-gray-50">
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap">
+                    <tr key={estimate.id} className="table-row">
+                      <td className="table-cell">
                         <Link
                           href={`/estimates/${estimate.id}`}
-                          className="text-xs md:text-sm font-medium text-blue-600 hover:text-blue-800"
+                          className="font-semibold text-blue-600 hover:text-blue-700"
                         >
                           {estimate.estimateNumber}
                         </Link>
-                        <div className="text-xs text-gray-500 md:hidden">
+                        <div className="text-xs text-gray-500 md:hidden mt-1">
                           {estimate.customer.name}
                         </div>
                       </td>
-                      <td className="px-3 md:px-6 py-4 hidden md:table-cell">
-                        <div className="text-sm text-gray-900">{estimate.customer.name}</div>
-                        <div className="text-xs text-gray-500">{estimate.customer.email}</div>
+                      <td className="table-cell hidden md:table-cell">
+                        <div className="font-medium">{estimate.customer.name}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{estimate.customer.email}</div>
                       </td>
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap">
+                      <td className="table-cell">
                         {getStatusBadge(estimate.status)}
                       </td>
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                      <td className="table-cell hidden sm:table-cell">
                         {getPriorityBadge(estimate.priority)}
                       </td>
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right hidden lg:table-cell">
-                        {formatMinutes(estimate.totalLaborMinutes)}
+                      <td className="table-cell text-right hidden lg:table-cell">
+                        <span className="font-medium">{formatMinutes(estimate.totalLaborMinutes)}</span>
                       </td>
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right hidden lg:table-cell">
-                        {formatCurrency(estimate.totalPartsCost)}
+                      <td className="table-cell text-right hidden lg:table-cell">
+                        <span className="font-medium">{formatCurrency(estimate.totalPartsCost)}</span>
                       </td>
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="table-cell text-right">
                         <Link
                           href={`/estimates/${estimate.id}`}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-blue-600 hover:text-blue-700 font-medium"
                         >
                           View
                         </Link>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Total Count */}
-        <div className="mt-4 text-sm text-gray-600">
-          Showing {estimates.length} {estimates.length === 1 ? 'estimate' : 'estimates'}
-        </div>
+        {estimates.length > 0 && (
+          <div className="mt-4 text-sm text-gray-600 font-medium">
+            Showing {estimates.length} {estimates.length === 1 ? 'estimate' : 'estimates'}
+          </div>
+        )}
       </div>
     </div>
   );
