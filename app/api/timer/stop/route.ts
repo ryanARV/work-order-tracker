@@ -6,7 +6,7 @@ import { createAuditLogData, TimeEntryActions } from '@/lib/audit';
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
-    const { notes } = await request.json();
+    const { notes, pauseReason } = await request.json();
 
     const activeTimer = await prisma.timeEntry.findFirst({
       where: {
@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
           endTs: now,
           durationSeconds,
           notes: notes || activeTimer.notes,
+          pauseReason: pauseReason || null,
         },
         include: {
           workOrder: {
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
           after: {
             durationSeconds,
             notes: notes || null,
+            pauseReason: pauseReason || null,
           },
         }),
       });

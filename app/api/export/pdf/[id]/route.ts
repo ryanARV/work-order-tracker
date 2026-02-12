@@ -10,6 +10,8 @@ export async function GET(
   try {
     await requireAdmin();
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const billType = searchParams.get('billType'); // 'CUSTOMER_PAY', 'WARRANTY', or null for all
 
     const workOrder = await prisma.workOrder.findUnique({
       where: { id },
@@ -52,9 +54,20 @@ export async function GET(
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+    // Filter line items by bill type if specified
+    const filteredLineItems = billType
+      ? workOrder.lineItems.filter((item) => item.billType === billType)
+      : workOrder.lineItems;
+
     let yPosition = 750;
 
-    page.drawText('WORK ORDER BILLING SUMMARY', {
+    const titleSuffix = billType === 'CUSTOMER_PAY'
+      ? ' - CUSTOMER PAY'
+      : billType === 'WARRANTY'
+      ? ' - WARRANTY'
+      : '';
+
+    page.drawText(`WORK ORDER BILLING SUMMARY${titleSuffix}`, {
       x: 50,
       y: yPosition,
       size: 18,
@@ -147,7 +160,7 @@ export async function GET(
 
     yPosition -= 25;
 
-    for (const lineItem of workOrder.lineItems) {
+    for (const lineItem of filteredLineItems) {
       if (!lineItem.billable) continue;
 
       const totalSeconds = lineItem.timeEntries.reduce(
@@ -228,7 +241,7 @@ export async function GET(
 
     yPosition -= 20;
 
-    const totalSeconds = workOrder.lineItems.reduce(
+    const totalSeconds = filteredLineItems.reduce(
       (sum, item) =>
         sum +
         (item.billable
@@ -296,10 +309,16 @@ export async function GET(
 
     const pdfBytes = await pdfDoc.save();
 
+    const filenameSuffix = billType === 'CUSTOMER_PAY'
+      ? '-customer-pay'
+      : billType === 'WARRANTY'
+      ? '-warranty'
+      : '';
+
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${workOrder.woNumber}-billing.pdf"`,
+        'Content-Disposition': `attachment; filename="${workOrder.woNumber}${filenameSuffix}-billing.pdf"`,
       },
     });
   } catch (error: any) {

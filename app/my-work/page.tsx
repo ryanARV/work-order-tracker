@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import ActiveTimer from '@/components/ActiveTimer';
 import WeeklyTimeSummary from '@/components/WeeklyTimeSummary';
+import PauseReasonModal from '@/app/components/PauseReasonModal';
 
 interface User {
   id: string;
@@ -50,6 +51,9 @@ export default function MyWorkPage() {
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'OPEN' | 'DONE'>('ALL');
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const [pauseModalDescription, setPauseModalDescription] = useState('');
+  const [pendingNotes, setPendingNotes] = useState<string | undefined>();
 
   const fetchData = async () => {
     try {
@@ -102,15 +106,25 @@ export default function MyWorkPage() {
     }
   };
 
-  const handleStopTimer = async (notes?: string) => {
+  const handleStopTimerClick = (notes?: string) => {
+    if (activeTimer) {
+      setPendingNotes(notes);
+      setPauseModalDescription(activeTimer.lineItem.description);
+      setShowPauseModal(true);
+    }
+  };
+
+  const handlePauseReasonSubmit = async (pauseReason: string) => {
     try {
       const res = await fetch('/api/timer/stop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes }),
+        body: JSON.stringify({ pauseReason, notes: pendingNotes }),
       });
 
       if (res.ok) {
+        setShowPauseModal(false);
+        setPendingNotes(undefined);
         await fetchData();
       } else {
         const data = await res.json();
@@ -181,8 +195,15 @@ export default function MyWorkPage() {
         </div>
 
         {activeTimer && (
-          <ActiveTimer timer={activeTimer} onStop={handleStopTimer} />
+          <ActiveTimer timer={activeTimer} onStop={handleStopTimerClick} />
         )}
+
+        <PauseReasonModal
+          isOpen={showPauseModal}
+          onClose={() => setShowPauseModal(false)}
+          onSubmit={handlePauseReasonSubmit}
+          lineItemDescription={pauseModalDescription}
+        />
 
         {/* Status Filter */}
         <div className="flex space-x-2 mb-4">

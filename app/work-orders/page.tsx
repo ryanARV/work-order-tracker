@@ -83,12 +83,20 @@ export default function WorkOrdersPage() {
     switch (status) {
       case 'DRAFT':
         return 'bg-gray-100 text-gray-800';
+      case 'PENDING':
+        return 'bg-slate-100 text-slate-800';
       case 'OPEN':
         return 'bg-blue-100 text-blue-800';
       case 'IN_PROGRESS':
         return 'bg-yellow-100 text-yellow-800';
+      case 'ON_HOLD_PARTS':
+        return 'bg-orange-100 text-orange-800';
+      case 'ON_HOLD_DELAY':
+        return 'bg-amber-100 text-amber-800';
       case 'READY_TO_BILL':
         return 'bg-purple-100 text-purple-800';
+      case 'QC':
+        return 'bg-indigo-100 text-indigo-800';
       case 'CLOSED':
         return 'bg-green-100 text-green-800';
       default:
@@ -155,9 +163,13 @@ export default function WorkOrdersPage() {
               >
                 <option value="">All Statuses</option>
                 <option value="DRAFT">Draft</option>
+                <option value="PENDING">Pending</option>
                 <option value="OPEN">Open</option>
                 <option value="IN_PROGRESS">In Progress</option>
+                <option value="ON_HOLD_PARTS">On Hold - Parts</option>
+                <option value="ON_HOLD_DELAY">On Hold - Delay</option>
                 <option value="READY_TO_BILL">Ready to Bill</option>
+                <option value="QC">QC</option>
                 <option value="CLOSED">Closed</option>
               </select>
             </div>

@@ -19,6 +19,7 @@ interface TimeEntry {
   endTs: string | null;
   durationSeconds: number | null;
   notes: string | null;
+  pauseReason: string | null;
   approvalState: string;
   user: {
     id: string;
@@ -29,6 +30,9 @@ interface TimeEntry {
 interface LineItem {
   id: string;
   description: string;
+  complaint: string | null;
+  correction: string | null;
+  billType: 'CUSTOMER_PAY' | 'WARRANTY' | null;
   billable: boolean;
   estimateMinutes: number | null;
   status: string;
@@ -137,6 +141,10 @@ export default function WorkOrderDetailPage() {
     window.open(`/api/export/pdf/${id}`, '_blank');
   };
 
+  const handleExportPDFByType = (billType: 'CUSTOMER_PAY' | 'WARRANTY') => {
+    window.open(`/api/export/pdf/${id}?billType=${billType}`, '_blank');
+  };
+
   const handleExportCSV = () => {
     window.open(`/api/export/csv/${id}`, '_blank');
   };
@@ -205,6 +213,31 @@ export default function WorkOrderDetailPage() {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'DRAFT':
+        return 'bg-gray-100 text-gray-800';
+      case 'PENDING':
+        return 'bg-slate-100 text-slate-800';
+      case 'OPEN':
+        return 'bg-blue-100 text-blue-800';
+      case 'IN_PROGRESS':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'ON_HOLD_PARTS':
+        return 'bg-orange-100 text-orange-800';
+      case 'ON_HOLD_DELAY':
+        return 'bg-amber-100 text-amber-800';
+      case 'READY_TO_BILL':
+        return 'bg-purple-100 text-purple-800';
+      case 'QC':
+        return 'bg-indigo-100 text-indigo-800';
+      case 'CLOSED':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -224,6 +257,11 @@ export default function WorkOrderDetailPage() {
         .length,
     0
   );
+
+  // Check for different bill types
+  const hasCustomerPay = workOrder.lineItems.some((item) => item.billType === 'CUSTOMER_PAY');
+  const hasWarranty = workOrder.lineItems.some((item) => item.billType === 'WARRANTY');
+  const hasMixedBillTypes = hasCustomerPay && hasWarranty;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -252,13 +290,7 @@ export default function WorkOrderDetailPage() {
               <div className="text-right">
                 <div className="mb-2">
                   <span
-                    className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                      workOrder.status === 'READY_TO_BILL'
-                        ? 'bg-purple-100 text-purple-800'
-                        : workOrder.status === 'CLOSED'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}
+                    className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(workOrder.status)}`}
                   >
                     {workOrder.status.replace(/_/g, ' ')}
                   </span>
@@ -306,7 +338,7 @@ export default function WorkOrderDetailPage() {
             </div>
 
             {user.role === 'ADMIN' && (
-              <div className="mt-6 flex space-x-3">
+              <div className="mt-6 flex flex-wrap gap-3">
                 <button
                   onClick={handleApproveAll}
                   disabled={unapprovedCount === 0}
@@ -321,9 +353,31 @@ export default function WorkOrderDetailPage() {
                 >
                   Mark Ready to Bill
                 </button>
-                <button onClick={handleExportPDF} className="btn-secondary">
-                  Export PDF
-                </button>
+
+                {/* Export buttons - show split options if mixed bill types */}
+                {hasMixedBillTypes ? (
+                  <>
+                    <button onClick={() => handleExportPDFByType('CUSTOMER_PAY')} className="btn-secondary">
+                      Export PDF (Customer Pay)
+                    </button>
+                    <button onClick={() => handleExportPDFByType('WARRANTY')} className="btn-secondary">
+                      Export PDF (Warranty)
+                    </button>
+                  </>
+                ) : hasCustomerPay ? (
+                  <button onClick={() => handleExportPDFByType('CUSTOMER_PAY')} className="btn-secondary">
+                    Export PDF (Customer Pay)
+                  </button>
+                ) : hasWarranty ? (
+                  <button onClick={() => handleExportPDFByType('WARRANTY')} className="btn-secondary">
+                    Export PDF (Warranty)
+                  </button>
+                ) : (
+                  <button onClick={handleExportPDF} className="btn-secondary">
+                    Export PDF
+                  </button>
+                )}
+
                 <button onClick={handleExportCSV} className="btn-secondary">
                   Export CSV
                 </button>
@@ -402,11 +456,36 @@ export default function WorkOrderDetailPage() {
                             NON-BILLABLE
                           </span>
                         )}
+                        {item.billType && (
+                          <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                            item.billType === 'WARRANTY'
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {item.billType === 'WARRANTY' ? 'WARRANTY' : 'CUSTOMER PAY'}
+                          </span>
+                        )}
                       </div>
                         <div className="text-sm text-gray-600">
                           Estimate: {formatMinutes(item.estimateMinutes)} | Tracked:{' '}
                           {formatMinutes(totalMinutes)} | Entries: {item.timeEntries.length}
                         </div>
+                        {(item.complaint || item.correction) && (
+                          <div className="mt-2 space-y-1 text-sm">
+                            {item.complaint && (
+                              <div>
+                                <span className="font-medium text-gray-700">Complaint:</span>
+                                <span className="text-gray-600 ml-1">{item.complaint}</span>
+                              </div>
+                            )}
+                            {item.correction && (
+                              <div>
+                                <span className="font-medium text-gray-700">Correction:</span>
+                                <span className="text-gray-600 ml-1">{item.correction}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="text-gray-400 cursor-pointer" onClick={() => toggleExpanded(item.id)}>
@@ -433,8 +512,15 @@ export default function WorkOrderDetailPage() {
                                 {entry.endTs &&
                                   ` - ${new Date(entry.endTs).toLocaleTimeString()}`}
                               </div>
+                              {entry.pauseReason && (
+                                <div className="text-sm text-gray-700 mt-1">
+                                  <span className="font-medium">Pause Reason:</span> {entry.pauseReason}
+                                </div>
+                              )}
                               {entry.notes && (
-                                <div className="text-sm text-gray-700 mt-1">{entry.notes}</div>
+                                <div className="text-sm text-gray-700 mt-1">
+                                  <span className="font-medium">Notes:</span> {entry.notes}
+                                </div>
                               )}
                             </div>
                             <div className="text-right">

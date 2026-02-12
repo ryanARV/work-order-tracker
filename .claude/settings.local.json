@@ -12,7 +12,8 @@
       "Bash(gh:*)",
       "Bash(winget install:*)",
       "WebFetch(domain:github.com)",
-      "Bash(npx prisma migrate dev:*)"
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(git add:*)"
     ]
   }
 }
