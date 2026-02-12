@@ -81,6 +81,12 @@ export default function Navbar({ user }: NavbarProps) {
                   Customers
                 </a>
                 <a
+                  href="/parts"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Parts
+                </a>
+                <a
                   href="/admin/exceptions"
                   className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
@@ -110,6 +116,12 @@ export default function Navbar({ user }: NavbarProps) {
                   className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
                   Customers
+                </a>
+                <a
+                  href="/parts"
+                  className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Parts
                 </a>
                 <a
                   href="/admin/exceptions"
@@ -154,6 +166,12 @@ export default function Navbar({ user }: NavbarProps) {
                 >
                   Customers
                 </a>
+                <a
+                  href="/parts"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Parts
+                </a>
               </div>
             </div>
           </div>
@@ -178,6 +196,12 @@ export default function Navbar({ user }: NavbarProps) {
                   className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
                   Customers
+                </a>
+                <a
+                  href="/parts"
+                  className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Parts
                 </a>
                 <div className="pt-2 mt-2 border-t border-blue-600">
                   <div className="px-3 py-2 text-sm">
@@ -210,6 +234,12 @@ export default function Navbar({ user }: NavbarProps) {
                 >
                   Board
                 </a>
+                <a
+                  href="/parts"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Parts
+                </a>
               </div>
             </div>
           </div>
@@ -228,6 +258,50 @@ export default function Navbar({ user }: NavbarProps) {
                   className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
                   Board
+                </a>
+                <a
+                  href="/parts"
+                  className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Parts
+                </a>
+                <div className="pt-2 mt-2 border-t border-blue-600">
+                  <div className="px-3 py-2 text-sm">
+                    <div className="font-medium">{user.name}</div>
+                    <div className="text-blue-200 text-xs">{user.role}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Parts Navigation */}
+      {user.role === 'PARTS' && (
+        <>
+          {/* Desktop Navigation */}
+          <div className="bg-blue-700 hidden md:block">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex space-x-4 py-2">
+                <a
+                  href="/parts"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Parts
+                </a>
+              </div>
+            </div>
+          </div>
+          {/* Mobile Navigation */}
+          {mobileMenuOpen && (
+            <div className="bg-blue-700 md:hidden">
+              <div className="px-4 py-2 space-y-1">
+                <a
+                  href="/parts"
+                  className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Parts
                 </a>
                 <div className="pt-2 mt-2 border-t border-blue-600">
                   <div className="px-3 py-2 text-sm">

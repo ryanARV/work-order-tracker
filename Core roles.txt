@@ -1,0 +1,90 @@
+Core roles
+Admin
+Service Writer
+Parts
+Technician
+Manager (reports + approvals + adjustments)
+
+Service Writer
+Estimate List
+Create/Edit Estimate
+customer + unit
+labor line items (estimated hours, rate, notes)
+parts line items (SKU, qty, price, availability)
+Convert to Work Order (one click)
+Work Order Board (Kanban by status)
+Work Order Detail
+line items + assignment + approvals + parts pick/issue status
+Actual vs Estimated summary
+Parts
+Parts Catalog
+Inventory
+on-hand, reserved, available, location/bin
+WO Pick List
+Issue Parts to WO (decrements stock; creates transaction)
+Technician
+My Work
+assigned line items
+“available” line items (if allowed)
+current active timer
+Line Item Detail
+instructions, notes, attachments
+clock in / pause / resume / stop
+mark complete + add notes
+Management
+Actual vs Estimated dashboards
+Tech performance
+WIP aging + holds (waiting parts, approval, etc.)
+
+Work order & time tracking rules (critical)
+Timer rules
+A technician can have only one active timer at a time (recommended; prevents garbage data).
+A labor line item can have multiple techs clocked in simultaneously (team jobs).
+Time entries are event-based and immutable (audit trail). Totals are calculated.
+Status events
+START
+PAUSE (reason required)
+RESUME
+STOP
+ADJUST (manager-only; requires reason)
+Actual vs Estimated calculations
+Estimated (line): work_order_line.estimated_minutes
+Actual (line): sum of all time sessions durations for that line
+Estimated (WO): sum estimated of labor lines
+Actual (WO): sum actual of labor lines
+Variance: actual − estimated (minutes/hours)
+You’ll show both:
+Clocked time (true time)
+Optional later: billable time (flat-rate override)
+Key UI behavior details
+Work Order Detail page should show:
+Header summary:
+Estimated labor hours
+Actual clocked hours
+Variance
+Parts status (All issued / waiting / partial)
+Labor lines table:
+Description | Est | Actual | Variance | Status | Assigned | “Clock In” (tech view)
+Parts lines / pick list:
+SKU | Qty needed | Reserved | Issued | Location/Bin
+Tech clock experience
+“Clock In” immediately starts a session and sets line to In Progress
+If tech clocks into another line, the app must:
+stop or pause prior session automatically (your choice; I recommend stop with prompt)
+Pause requires reason:
+Waiting parts
+Waiting approval
+Diagnostic hold
+Lunch/Break
+Other
+ 
+One active timer per tech: Yes (recommended)
+ 
+Team clocking: Allowed
+ 
+Actual time uses: Sum of all tech sessions (so team jobs consume more actual labor)
+ 
+Parts reservation timing: On WO approval
+ 
+Adjustments: Manager-only, always logged
+ 
