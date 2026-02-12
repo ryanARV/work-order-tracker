@@ -49,6 +49,13 @@ export async function GET(request: NextRequest) {
             durationSeconds: true,
           },
         },
+        partItems: {
+          select: {
+            id: true,
+            quantity: true,
+            quantityIssued: true,
+          },
+        },
       },
       orderBy: [
         { kanbanColumn: 'asc' },
@@ -86,6 +93,21 @@ export async function GET(request: NextRequest) {
           });
         });
 
+        // Calculate parts status
+        let partsStatus: 'NO_PARTS' | 'ALL_ISSUED' | 'PARTIALLY_ISSUED' | 'NOT_ISSUED' = 'NO_PARTS';
+        if (wo.partItems.length > 0) {
+          const allIssued = wo.partItems.every((p) => p.quantityIssued >= p.quantity);
+          const someIssued = wo.partItems.some((p) => p.quantityIssued > 0);
+
+          if (allIssued) {
+            partsStatus = 'ALL_ISSUED';
+          } else if (someIssued) {
+            partsStatus = 'PARTIALLY_ISSUED';
+          } else {
+            partsStatus = 'NOT_ISSUED';
+          }
+        }
+
         columns[wo.kanbanColumn].push({
           id: wo.id,
           woNumber: wo.woNumber,
@@ -98,6 +120,7 @@ export async function GET(request: NextRequest) {
           progressTotal: totalCount,
           totalHours: totalSeconds / 3600,
           assignedTechs: Array.from(assignedTechs).map((t: string) => JSON.parse(t)),
+          partsStatus,
         });
       }
     });

@@ -16,6 +16,7 @@ interface WorkOrderCard {
   progressTotal: number;
   totalHours: number;
   assignedTechs: { id: string; name: string }[];
+  partsStatus: 'NO_PARTS' | 'ALL_ISSUED' | 'PARTIALLY_ISSUED' | 'NOT_ISSUED';
 }
 
 interface BoardData {
@@ -180,6 +181,33 @@ export default function KanbanBoardPage() {
     }
   };
 
+  const getPartsStatusBadge = (status: WorkOrderCard['partsStatus']) => {
+    switch (status) {
+      case 'ALL_ISSUED':
+        return (
+          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+            ✓ Parts Ready
+          </span>
+        );
+      case 'PARTIALLY_ISSUED':
+        return (
+          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">
+            ⚠ Parts Partial
+          </span>
+        );
+      case 'NOT_ISSUED':
+        return (
+          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-medium">
+            ✗ Waiting Parts
+          </span>
+        );
+      case 'NO_PARTS':
+        return null; // Don't show badge if no parts needed
+      default:
+        return null;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 md:p-6">
@@ -280,9 +308,15 @@ export default function KanbanBoardPage() {
                       )}
                     </div>
 
-                    <p className="text-xs md:text-sm text-gray-700 mb-2 md:mb-3 truncate" title={card.customerName}>
+                    <p className="text-xs md:text-sm text-gray-700 mb-2 truncate" title={card.customerName}>
                       {card.customerName}
                     </p>
+
+                    {getPartsStatusBadge(card.partsStatus) && (
+                      <div className="mb-2">
+                        {getPartsStatusBadge(card.partsStatus)}
+                      </div>
+                    )}
 
                     <div className="flex justify-between items-center text-xs md:text-sm text-gray-600">
                       <span>
