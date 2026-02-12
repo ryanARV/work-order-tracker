@@ -5,12 +5,14 @@ import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import AddLineItemModal from '@/components/AddLineItemModal';
 import CommentsSection from '@/components/CommentsSection';
+import WorkOrderPartsTable from '@/components/WorkOrderPartsTable';
+import PartPickerModal from '@/components/PartPickerModal';
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'TECH';
+  role: 'ADMIN' | 'TECH' | 'SERVICE_WRITER' | 'PARTS' | 'MANAGER';
 }
 
 interface TimeEntry {
@@ -64,12 +66,16 @@ export default function WorkOrderDetailPage() {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [showAddLineItemModal, setShowAddLineItemModal] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<'lineItems' | 'parts' | 'comments'>('lineItems');
+  const [parts, setParts] = useState<any[]>([]);
+  const [showPartPicker, setShowPartPicker] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [userRes, woRes] = await Promise.all([
+      const [userRes, woRes, partsRes] = await Promise.all([
         fetch('/api/auth/me'),
         fetch(`/api/work-orders/${id}`),
+        fetch(`/api/work-orders/${id}/parts`),
       ]);
 
       if (!userRes.ok) {
@@ -83,6 +89,11 @@ export default function WorkOrderDetailPage() {
       setUser(userData.user);
       setWorkOrder(woData.workOrder);
       setTotals(woData.totals);
+
+      if (partsRes.ok) {
+        const partsData = await partsRes.json();
+        setParts(partsData.parts || []);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -152,6 +163,35 @@ export default function WorkOrderDetailPage() {
   const handleAddLineItemSuccess = () => {
     setShowAddLineItemModal(false);
     fetchData();
+  };
+
+  const handleAddPart = async (part: any, quantity: number) => {
+    try {
+      const res = await fetch(`/api/work-orders/${id}/parts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partId: part.id,
+          description: part.description,
+          quantity,
+          unitCost: part.unitCost,
+          unitPrice: part.unitPrice,
+          billType: 'CUSTOMER',
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || 'Failed to add part');
+        return;
+      }
+
+      setShowPartPicker(false);
+      fetchData();
+    } catch (error) {
+      console.error('Error adding part:', error);
+      alert('Failed to add part');
+    }
   };
 
   const toggleExpanded = (itemId: string) => {
@@ -387,15 +427,54 @@ export default function WorkOrderDetailPage() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-          <h2 className="text-lg md:text-xl font-semibold text-gray-900">Line Items</h2>
-          <button
-            onClick={() => setShowAddLineItemModal(true)}
-            className="btn-primary text-xs md:text-sm whitespace-nowrap"
-          >
-            + Add Line Item
-          </button>
+        {/* Tabs */}
+        <div className="bg-white shadow-md rounded-lg mb-4 overflow-x-auto">
+          <div className="flex border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('lineItems')}
+              className={`px-4 py-3 text-sm md:text-base font-medium whitespace-nowrap ${
+                activeTab === 'lineItems'
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Line Items
+            </button>
+            <button
+              onClick={() => setActiveTab('parts')}
+              className={`px-4 py-3 text-sm md:text-base font-medium whitespace-nowrap ${
+                activeTab === 'parts'
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Parts {parts.length > 0 && `(${parts.length})`}
+            </button>
+            <button
+              onClick={() => setActiveTab('comments')}
+              className={`px-4 py-3 text-sm md:text-base font-medium whitespace-nowrap ${
+                activeTab === 'comments'
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Comments
+            </button>
+          </div>
         </div>
+
+        {/* Line Items Tab */}
+        {activeTab === 'lineItems' && (
+          <>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900">Line Items</h2>
+              <button
+                onClick={() => setShowAddLineItemModal(true)}
+                className="btn-primary text-xs md:text-sm whitespace-nowrap"
+              >
+                + Add Line Item
+              </button>
+            </div>
 
         {/* Bulk Actions Bar */}
         {user.role === 'ADMIN' && selectedItems.size > 0 && (
@@ -559,11 +638,41 @@ export default function WorkOrderDetailPage() {
             );
           })}
         </div>
+          </>
+        )}
 
-        {/* Comments Section */}
-        <div className="mt-4 md:mt-6 bg-white shadow-md rounded-lg p-4 md:p-6">
-          <CommentsSection workOrderId={id} currentUser={user} />
-        </div>
+        {/* Parts Tab */}
+        {activeTab === 'parts' && (
+          <>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900">Parts</h2>
+              {['SERVICE_WRITER', 'ADMIN', 'MANAGER'].includes(user?.role || '') && (
+                <button
+                  onClick={() => setShowPartPicker(true)}
+                  className="btn-primary text-xs md:text-sm whitespace-nowrap"
+                >
+                  + Add Part
+                </button>
+              )}
+            </div>
+
+            <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
+              <WorkOrderPartsTable
+                parts={parts}
+                workOrderId={id}
+                userRole={user?.role || ''}
+                onUpdate={fetchData}
+              />
+            </div>
+          </>
+        )}
+
+        {/* Comments Tab */}
+        {activeTab === 'comments' && (
+          <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
+            <CommentsSection workOrderId={id} currentUser={user} />
+          </div>
+        )}
       </div>
 
       {showAddLineItemModal && (
@@ -571,6 +680,13 @@ export default function WorkOrderDetailPage() {
           workOrderId={id}
           onClose={() => setShowAddLineItemModal(false)}
           onSuccess={handleAddLineItemSuccess}
+        />
+      )}
+
+      {showPartPicker && (
+        <PartPickerModal
+          onSelect={handleAddPart}
+          onClose={() => setShowPartPicker(false)}
         />
       )}
     </div>
