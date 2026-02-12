@@ -34,3 +34,9 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# Company process documents and sensitive files
+*.pdf
+Core Roles.txt
+Service Operations Flow*.pdf
+*.env.cloud
