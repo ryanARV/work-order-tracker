@@ -8,7 +8,7 @@ export interface SessionUser {
   id: string;
   email: string;
   name: string;
-  role: 'ADMIN' | 'TECH';
+  role: 'ADMIN' | 'TECH' | 'SERVICE_WRITER' | 'PARTS' | 'MANAGER';
 }
 
 export async function getSession(): Promise<SessionUser | null> {
@@ -51,6 +51,63 @@ export async function requireAdmin(): Promise<SessionUser> {
     throw new Error('Forbidden - Admin access required');
   }
   return user;
+}
+
+export async function requireTech(): Promise<SessionUser> {
+  const user = await requireAuth();
+  if (user.role !== 'TECH') {
+    throw new Error('Forbidden - Technician access required');
+  }
+  return user;
+}
+
+export async function requireServiceWriter(): Promise<SessionUser> {
+  const user = await requireAuth();
+  if (user.role !== 'SERVICE_WRITER' && user.role !== 'ADMIN') {
+    throw new Error('Forbidden - Service Writer access required');
+  }
+  return user;
+}
+
+export async function requireParts(): Promise<SessionUser> {
+  const user = await requireAuth();
+  if (user.role !== 'PARTS' && user.role !== 'ADMIN') {
+    throw new Error('Forbidden - Parts access required');
+  }
+  return user;
+}
+
+export async function requireManager(): Promise<SessionUser> {
+  const user = await requireAuth();
+  if (user.role !== 'MANAGER' && user.role !== 'ADMIN') {
+    throw new Error('Forbidden - Manager access required');
+  }
+  return user;
+}
+
+// Permission helper functions
+export function canManageWorkOrders(user: SessionUser): boolean {
+  return ['ADMIN', 'SERVICE_WRITER', 'MANAGER'].includes(user.role);
+}
+
+export function canManageParts(user: SessionUser): boolean {
+  return ['ADMIN', 'PARTS', 'MANAGER'].includes(user.role);
+}
+
+export function canTrackTime(user: SessionUser): boolean {
+  return ['ADMIN', 'TECH'].includes(user.role);
+}
+
+export function canManageTime(user: SessionUser): boolean {
+  return ['ADMIN', 'MANAGER'].includes(user.role);
+}
+
+export function canCreateEstimates(user: SessionUser): boolean {
+  return ['ADMIN', 'SERVICE_WRITER', 'MANAGER'].includes(user.role);
+}
+
+export function canViewKanban(user: SessionUser): boolean {
+  return ['ADMIN', 'SERVICE_WRITER', 'MANAGER'].includes(user.role);
 }
 
 export async function login(email: string, password: string): Promise<SessionUser | null> {

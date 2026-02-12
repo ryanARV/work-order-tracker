@@ -10,6 +10,9 @@ datasource db {
 enum UserRole {
   ADMIN
   TECH
+  SERVICE_WRITER
+  PARTS
+  MANAGER
 }
 
 enum WorkOrderStatus {
@@ -41,6 +44,33 @@ enum ApprovalState {
   LOCKED
 }
 
+enum EstimateStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  CONVERTED
+  EXPIRED
+}
+
+enum PartTransactionType {
+  PURCHASE
+  RETURN
+  ADJUSTMENT
+  RESERVE
+  UNRESERVE
+  ISSUE
+}
+
+enum KanbanColumn {
+  OPEN
+  IN_PROGRESS
+  ON_HOLD_PARTS
+  ON_HOLD_DELAY
+  QC
+  READY_TO_BILL
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String
@@ -57,6 +87,10 @@ model User {
   approvedTimeEntries TimeEntry[]          @relation("ApprovedBy")
   auditLogs           AuditLog[]
   comments            Comment[]
+  createdEstimates    Estimate[]           @relation("CreatedBy")
+  partTransactions    PartTransaction[]
+  issuedPartItems     WorkOrderPartItem[]  @relation("IssuedBy")
+  adjustedTimeEntries TimeEntry[]          @relation("AdjustedBy")
 
   @@index([deletedAt])
   @@map("users")
@@ -79,6 +113,7 @@ model Customer {
   deletedAt      DateTime? @map("deleted_at")
 
   workOrders WorkOrder[]
+  estimates  Estimate[]
 
   @@index([deletedAt])
   @@index([name])
@@ -92,18 +127,24 @@ model WorkOrder {
   status                      WorkOrderStatus  @default(DRAFT)
   priority                    String?
   warrantyAuthorizationNumber String?          @map("warranty_authorization_number")
+  kanbanColumn                KanbanColumn?    @map("kanban_column")
+  kanbanPosition              Int?             @map("kanban_position")
+  convertedFromEstimateId     String?          @unique @map("converted_from_estimate_id")
   createdAt                   DateTime         @default(now()) @map("created_at")
   updatedAt                   DateTime         @updatedAt @map("updated_at")
   closedAt                    DateTime?        @map("closed_at")
   deletedAt                   DateTime?        @map("deleted_at")
 
-  customer    Customer     @relation(fields: [customerId], references: [id])
-  lineItems   LineItem[]
-  timeEntries TimeEntry[]
-  comments    Comment[]
+  customer            Customer            @relation(fields: [customerId], references: [id])
+  convertedFromEstimate Estimate?         @relation("ConvertedToWorkOrder", fields: [convertedFromEstimateId], references: [id])
+  lineItems           LineItem[]
+  timeEntries         TimeEntry[]
+  comments            Comment[]
+  partItems           WorkOrderPartItem[]
 
   @@index([customerId])
   @@index([deletedAt])
+  @@index([kanbanColumn, kanbanPosition])
   @@map("work_orders")
 }
 
@@ -126,6 +167,7 @@ model LineItem {
   assignments        LineItemAssignment[]
   timeEntries        TimeEntry[]
   comments           Comment[]
+  partItems          WorkOrderPartItem[]
 
   @@index([workOrderId])
   @@index([status])
@@ -143,7 +185,7 @@ model LineItemAssignment {
   lineItem LineItem @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id])
 
-  @@unique([lineItemId, userId])
+  @@index([lineItemId, userId])
   @@index([userId])
   @@map("line_item_assignments")
 }
@@ -161,6 +203,7 @@ model TimeEntry {
   approvalState   ApprovalState @default(DRAFT) @map("approval_state")
   approvedById    String?       @map("approved_by")
   approvedAt      DateTime?     @map("approved_at")
+  adjustedById    String?       @map("adjusted_by")
   editedReason    String?       @map("edited_reason")
   editedAt        DateTime?     @map("edited_at")
   createdAt       DateTime      @default(now()) @map("created_at")
@@ -171,6 +214,7 @@ model TimeEntry {
   workOrder  WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
   lineItem   LineItem  @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
   approvedBy User?     @relation("ApprovedBy", fields: [approvedById], references: [id])
+  adjustedBy User?     @relation("AdjustedBy", fields: [adjustedById], references: [id])
 
   @@index([userId, endTs])
   @@index([workOrderId, lineItemId])
@@ -205,6 +249,7 @@ model Comment {
   userId       String     @map("user_id")
   workOrderId  String?    @map("work_order_id")
   lineItemId   String?    @map("line_item_id")
+  estimateId   String?    @map("estimate_id")
   content      String     @db.Text
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
@@ -213,11 +258,160 @@ model Comment {
   user       User       @relation(fields: [userId], references: [id])
   workOrder  WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
   lineItem   LineItem?  @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+  estimate   Estimate?  @relation(fields: [estimateId], references: [id], onDelete: Cascade)
 
   @@index([workOrderId])
   @@index([lineItemId])
+  @@index([estimateId])
   @@index([userId])
   @@index([deletedAt])
   @@index([createdAt])
   @@map("comments")
+}
+
+model Estimate {
+  id                          String         @id @default(cuid())
+  estimateNumber              String         @unique @map("estimate_number")
+  customerId                  String         @map("customer_id")
+  status                      EstimateStatus @default(DRAFT)
+  priority                    String?
+  warrantyAuthorizationNumber String?        @map("warranty_authorization_number")
+  validUntil                  DateTime?      @map("valid_until")
+  createdById                 String         @map("created_by_id")
+  createdAt                   DateTime       @default(now()) @map("created_at")
+  updatedAt                   DateTime       @updatedAt @map("updated_at")
+  deletedAt                   DateTime?      @map("deleted_at")
+
+  customer         Customer            @relation(fields: [customerId], references: [id])
+  createdBy        User                @relation("CreatedBy", fields: [createdById], references: [id])
+  convertedToWorkOrder WorkOrder?      @relation("ConvertedToWorkOrder")
+  lineItems        EstimateLineItem[]
+  partItems        EstimatePartItem[]
+  comments         Comment[]
+
+  @@index([customerId])
+  @@index([createdById])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("estimates")
+}
+
+model EstimateLineItem {
+  id              String    @id @default(cuid())
+  estimateId      String    @map("estimate_id")
+  description     String
+  complaint       String?   @db.Text
+  correction      String?   @db.Text
+  billType        BillType? @map("bill_type")
+  estimateMinutes Int?      @map("estimate_minutes")
+  laborRate       Decimal?  @map("labor_rate") @db.Decimal(10, 2)
+  sortOrder       Int       @default(0) @map("sort_order")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  estimate Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+
+  @@index([estimateId])
+  @@index([deletedAt])
+  @@map("estimate_line_items")
+}
+
+model Part {
+  id               String    @id @default(cuid())
+  partNumber       String    @unique @map("part_number")
+  description      String
+  manufacturer     String?
+  unitCost         Decimal   @default(0) @map("unit_cost") @db.Decimal(10, 2)
+  unitPrice        Decimal   @default(0) @map("unit_price") @db.Decimal(10, 2)
+  quantityOnHand   Int       @default(0) @map("quantity_on_hand")
+  quantityReserved Int       @default(0) @map("quantity_reserved")
+  reorderLevel     Int       @default(0) @map("reorder_level")
+  location         String?
+  active           Boolean   @default(true)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  estimatePartItems   EstimatePartItem[]
+  workOrderPartItems  WorkOrderPartItem[]
+  transactions        PartTransaction[]
+
+  @@index([partNumber])
+  @@index([active])
+  @@index([deletedAt])
+  @@map("parts")
+}
+
+model EstimatePartItem {
+  id          String    @id @default(cuid())
+  estimateId  String    @map("estimate_id")
+  partId      String?   @map("part_id")
+  description String
+  quantity    Int       @default(1)
+  unitCost    Decimal   @map("unit_cost") @db.Decimal(10, 2)
+  unitPrice   Decimal   @map("unit_price") @db.Decimal(10, 2)
+  billType    BillType? @map("bill_type")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  estimate Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  part     Part?    @relation(fields: [partId], references: [id])
+
+  @@index([estimateId])
+  @@index([partId])
+  @@index([deletedAt])
+  @@map("estimate_part_items")
+}
+
+model WorkOrderPartItem {
+  id             String    @id @default(cuid())
+  workOrderId    String    @map("work_order_id")
+  lineItemId     String?   @map("line_item_id")
+  partId         String?   @map("part_id")
+  description    String
+  quantity       Int       @default(1)
+  quantityIssued Int       @default(0) @map("quantity_issued")
+  unitCost       Decimal   @map("unit_cost") @db.Decimal(10, 2)
+  unitPrice      Decimal   @map("unit_price") @db.Decimal(10, 2)
+  billType       BillType? @map("bill_type")
+  issuedById     String?   @map("issued_by_id")
+  issuedAt       DateTime? @map("issued_at")
+  sortOrder      Int       @default(0) @map("sort_order")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  workOrder  WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  lineItem   LineItem? @relation(fields: [lineItemId], references: [id])
+  part       Part?     @relation(fields: [partId], references: [id])
+  issuedBy   User?     @relation("IssuedBy", fields: [issuedById], references: [id])
+
+  @@index([workOrderId])
+  @@index([lineItemId])
+  @@index([partId])
+  @@index([deletedAt])
+  @@map("work_order_part_items")
+}
+
+model PartTransaction {
+  id          String              @id @default(cuid())
+  partId      String              @map("part_id")
+  type        PartTransactionType
+  quantity    Int
+  unitCost    Decimal?            @map("unit_cost") @db.Decimal(10, 2)
+  workOrderId String?             @map("work_order_id")
+  userId      String              @map("user_id")
+  notes       String?             @db.Text
+  createdAt   DateTime            @default(now()) @map("created_at")
+
+  part Part @relation(fields: [partId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([partId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("part_transactions")
 }

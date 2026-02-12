@@ -40,15 +40,22 @@ export default function Navbar({ user }: NavbarProps) {
           </div>
         </div>
       </div>
+      {/* Admin Navigation */}
       {user.role === 'ADMIN' && (
         <div className="bg-blue-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex space-x-4 py-2">
               <a
-                href="/"
+                href="/work-orders"
                 className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Work Orders
+              </a>
+              <a
+                href="/work-orders/board"
+                className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+              >
+                Board
               </a>
               <a
                 href="/customers"
@@ -61,6 +68,72 @@ export default function Navbar({ user }: NavbarProps) {
                 className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Exceptions
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Service Writer Navigation */}
+      {user.role === 'SERVICE_WRITER' && (
+        <div className="bg-blue-700">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex space-x-4 py-2">
+              <a
+                href="/work-orders"
+                className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+              >
+                Work Orders
+              </a>
+              <a
+                href="/work-orders/board"
+                className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+              >
+                Board
+              </a>
+              <a
+                href="/customers"
+                className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+              >
+                Customers
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manager Navigation */}
+      {user.role === 'MANAGER' && (
+        <div className="bg-blue-700">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex space-x-4 py-2">
+              <a
+                href="/work-orders"
+                className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+              >
+                Work Orders
+              </a>
+              <a
+                href="/work-orders/board"
+                className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+              >
+                Board
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tech Navigation */}
+      {user.role === 'TECH' && (
+        <div className="bg-blue-700">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex space-x-4 py-2">
+              <a
+                href="/my-work"
+                className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+              >
+                My Work
               </a>
             </div>
           </div>

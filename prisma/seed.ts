@@ -8,10 +8,17 @@ async function main() {
 
   // Clean existing data (in correct order due to foreign keys)
   console.log('🧹 Cleaning existing data...');
+  await prisma.partTransaction.deleteMany({});
+  await prisma.workOrderPartItem.deleteMany({});
+  await prisma.estimatePartItem.deleteMany({});
+  await prisma.estimateLineItem.deleteMany({});
+  await prisma.comment.deleteMany({});
   await prisma.timeEntry.deleteMany({});
   await prisma.lineItemAssignment.deleteMany({});
   await prisma.lineItem.deleteMany({});
   await prisma.workOrder.deleteMany({});
+  await prisma.estimate.deleteMany({});
+  await prisma.part.deleteMany({});
   await prisma.customer.deleteMany({});
   await prisma.auditLog.deleteMany({});
   await prisma.user.deleteMany({});
@@ -69,7 +76,43 @@ async function main() {
     },
   });
 
-  console.log('✅ Created users:', { admin, tech1, tech2, tech3 });
+  const serviceWriter = await prisma.user.upsert({
+    where: { email: 'writer@example.com' },
+    update: {},
+    create: {
+      email: 'writer@example.com',
+      name: 'Lisa Service Writer',
+      passwordHash: await bcrypt.hash('writer123', 10),
+      role: 'SERVICE_WRITER',
+      active: true,
+    },
+  });
+
+  const partsManager = await prisma.user.upsert({
+    where: { email: 'parts@example.com' },
+    update: {},
+    create: {
+      email: 'parts@example.com',
+      name: 'Tom Parts Manager',
+      passwordHash: await bcrypt.hash('parts123', 10),
+      role: 'PARTS',
+      active: true,
+    },
+  });
+
+  const manager = await prisma.user.upsert({
+    where: { email: 'manager@example.com' },
+    update: {},
+    create: {
+      email: 'manager@example.com',
+      name: 'Karen Manager',
+      passwordHash: await bcrypt.hash('manager123', 10),
+      role: 'MANAGER',
+      active: true,
+    },
+  });
+
+  console.log('✅ Created users:', { admin, tech1, tech2, tech3, serviceWriter, partsManager, manager });
 
   // Create customers
   const customer1 = await prisma.customer.create({
@@ -116,6 +159,79 @@ async function main() {
 
   console.log('✅ Created customers:', { customer1, customer2, customer3 });
 
+  // Create parts catalog
+  const part1 = await prisma.part.create({
+    data: {
+      partNumber: 'HYD-PUMP-500',
+      description: 'Hydraulic Pump 500 Series',
+      manufacturer: 'HydraulicCo',
+      unitCost: 450.00,
+      unitPrice: 650.00,
+      quantityOnHand: 5,
+      quantityReserved: 0,
+      reorderLevel: 2,
+      location: 'Shelf A3',
+    },
+  });
+
+  const part2 = await prisma.part.create({
+    data: {
+      partNumber: 'CONV-BELT-200',
+      description: 'Conveyor Belt 200ft',
+      manufacturer: 'BeltMasters',
+      unitCost: 280.00,
+      unitPrice: 420.00,
+      quantityOnHand: 3,
+      quantityReserved: 0,
+      reorderLevel: 1,
+      location: 'Shelf B12',
+    },
+  });
+
+  const part3 = await prisma.part.create({
+    data: {
+      partNumber: 'TEMP-SENSOR-X1',
+      description: 'Temperature Sensor X1 Model',
+      manufacturer: 'SensorTech',
+      unitCost: 45.00,
+      unitPrice: 75.00,
+      quantityOnHand: 12,
+      quantityReserved: 0,
+      reorderLevel: 5,
+      location: 'Drawer C4',
+    },
+  });
+
+  const part4 = await prisma.part.create({
+    data: {
+      partNumber: 'AIR-FILTER-STD',
+      description: 'Standard Air Filter',
+      manufacturer: 'FilterPro',
+      unitCost: 15.00,
+      unitPrice: 30.00,
+      quantityOnHand: 25,
+      quantityReserved: 0,
+      reorderLevel: 10,
+      location: 'Shelf D2',
+    },
+  });
+
+  const part5 = await prisma.part.create({
+    data: {
+      partNumber: 'SAFETY-GUARD-M',
+      description: 'Safety Guard Medium',
+      manufacturer: 'SafetyFirst',
+      unitCost: 85.00,
+      unitPrice: 140.00,
+      quantityOnHand: 8,
+      quantityReserved: 0,
+      reorderLevel: 3,
+      location: 'Shelf E7',
+    },
+  });
+
+  console.log('✅ Created parts:', { part1, part2, part3, part4, part5 });
+
   // Create work orders with line items
   const wo1 = await prisma.workOrder.create({
     data: {
@@ -123,6 +239,8 @@ async function main() {
       customerId: customer1.id,
       status: 'OPEN',
       priority: 'HIGH',
+      kanbanColumn: 'OPEN',
+      kanbanPosition: 1,
       lineItems: {
         create: [
           {
@@ -158,6 +276,8 @@ async function main() {
       customerId: customer2.id,
       status: 'IN_PROGRESS',
       priority: 'MEDIUM',
+      kanbanColumn: 'IN_PROGRESS',
+      kanbanPosition: 1,
       lineItems: {
         create: [
           {
@@ -186,6 +306,8 @@ async function main() {
       customerId: customer3.id,
       status: 'OPEN',
       priority: 'LOW',
+      kanbanColumn: 'OPEN',
+      kanbanPosition: 2,
       lineItems: {
         create: [
           {
@@ -271,12 +393,86 @@ async function main() {
 
   console.log('✅ Created sample time entries');
 
+  // Create sample estimate
+  const estimate1 = await prisma.estimate.create({
+    data: {
+      estimateNumber: 'EST-2024-001',
+      customerId: customer1.id,
+      status: 'PENDING_APPROVAL',
+      priority: 'MEDIUM',
+      createdById: serviceWriter.id,
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Valid for 30 days
+      lineItems: {
+        create: [
+          {
+            description: 'Install new control panel',
+            complaint: 'Old control panel failing intermittently',
+            correction: 'Replace with updated model with digital controls',
+            billType: 'CUSTOMER_PAY',
+            estimateMinutes: 360,
+            laborRate: 95.00,
+            sortOrder: 1,
+          },
+          {
+            description: 'Update PLC programming',
+            billType: 'CUSTOMER_PAY',
+            estimateMinutes: 240,
+            laborRate: 125.00,
+            sortOrder: 2,
+          },
+        ],
+      },
+      partItems: {
+        create: [
+          {
+            partId: part3.id,
+            description: 'Temperature Sensor X1 Model',
+            quantity: 4,
+            unitCost: 45.00,
+            unitPrice: 75.00,
+            billType: 'CUSTOMER_PAY',
+            sortOrder: 1,
+          },
+        ],
+      },
+    },
+  });
+
+  console.log('✅ Created sample estimate:', estimate1);
+
+  // Add parts to WO2 (emergency repair)
+  await prisma.workOrderPartItem.create({
+    data: {
+      workOrderId: wo2.id,
+      lineItemId: wo2.lineItems[0].id,
+      partId: part5.id,
+      description: 'Safety Guard Medium',
+      quantity: 2,
+      quantityIssued: 0,
+      unitCost: 85.00,
+      unitPrice: 140.00,
+      billType: 'CUSTOMER_PAY',
+      sortOrder: 1,
+    },
+  });
+
+  // Reserve parts for the work order
+  await prisma.part.update({
+    where: { id: part5.id },
+    data: { quantityReserved: 2 },
+  });
+
+  console.log('✅ Created work order parts');
+
   console.log('🎉 Seeding completed!');
   console.log('\n📝 Login credentials:');
   console.log('  Admin: admin@example.com / admin123');
   console.log('  Tech1: tech1@example.com / tech123');
   console.log('  Tech2: tech2@example.com / tech123');
   console.log('  Tech3: tech3@example.com / tech123');
+  console.log('  Service Writer: writer@example.com / writer123');
+  console.log('  Parts Manager: parts@example.com / parts123');
+  console.log('  Manager: manager@example.com / manager123');
 }
 
 main()
