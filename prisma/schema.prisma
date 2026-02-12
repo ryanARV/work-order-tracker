@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  TECH
+}
+
+enum WorkOrderStatus {
+  DRAFT
+  OPEN
+  IN_PROGRESS
+  READY_TO_BILL
+  CLOSED
+}
+
+enum LineItemStatus {
+  OPEN
+  DONE
+}
+
+enum ApprovalState {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  LOCKED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  role          UserRole
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  timeEntries         TimeEntry[]
+  lineItemAssignments LineItemAssignment[]
+  approvedTimeEntries TimeEntry[]          @relation("ApprovedBy")
+  auditLogs           AuditLog[]
+  comments            Comment[]
+
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Customer {
+  id             String    @id @default(cuid())
+  name           String
+  contactName    String?   @map("contact_name")
+  contactEmail   String?   @map("contact_email")
+  contactPhone   String?   @map("contact_phone")
+  billingStreet  String?   @map("billing_street")
+  billingCity    String?   @map("billing_city")
+  billingState   String?   @map("billing_state")
+  billingZip     String?   @map("billing_zip")
+  billingCountry String?   @map("billing_country")
+  notes          String?   @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  workOrders WorkOrder[]
+
+  @@index([deletedAt])
+  @@index([name])
+  @@map("customers")
+}
+
+model WorkOrder {
+  id         String           @id @default(cuid())
+  woNumber   String           @unique @map("wo_number")
+  customerId String           @map("customer_id")
+  status     WorkOrderStatus  @default(DRAFT)
+  priority   String?
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+  closedAt   DateTime?        @map("closed_at")
+  deletedAt  DateTime?        @map("deleted_at")
+
+  customer    Customer     @relation(fields: [customerId], references: [id])
+  lineItems   LineItem[]
+  timeEntries TimeEntry[]
+  comments    Comment[]
+
+  @@index([customerId])
+  @@index([deletedAt])
+  @@map("work_orders")
+}
+
+model LineItem {
+  id              String         @id @default(cuid())
+  workOrderId     String         @map("work_order_id")
+  description     String
+  billable        Boolean        @default(true)
+  estimateMinutes Int?           @map("estimate_minutes")
+  status          LineItemStatus @default(OPEN)
+  sortOrder       Int            @default(0) @map("sort_order")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  deletedAt       DateTime?      @map("deleted_at")
+
+  workOrder          WorkOrder            @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  assignments        LineItemAssignment[]
+  timeEntries        TimeEntry[]
+  comments           Comment[]
+
+  @@index([workOrderId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("line_items")
+}
+
+model LineItemAssignment {
+  id         String   @id @default(cuid())
+  lineItemId String   @map("line_item_id")
+  userId     String   @map("user_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  lineItem LineItem @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([lineItemId, userId])
+  @@index([userId])
+  @@map("line_item_assignments")
+}
+
+model TimeEntry {
+  id              String        @id @default(cuid())
+  userId          String        @map("user_id")
+  workOrderId     String        @map("work_order_id")
+  lineItemId      String        @map("line_item_id")
+  startTs         DateTime      @map("start_ts")
+  endTs           DateTime?     @map("end_ts")
+  durationSeconds Int?          @map("duration_seconds")
+  notes           String?
+  approvalState   ApprovalState @default(DRAFT) @map("approval_state")
+  approvedById    String?       @map("approved_by")
+  approvedAt      DateTime?     @map("approved_at")
+  editedReason    String?       @map("edited_reason")
+  editedAt        DateTime?     @map("edited_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  deletedAt       DateTime?     @map("deleted_at")
+
+  user       User      @relation(fields: [userId], references: [id])
+  workOrder  WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  lineItem   LineItem  @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+  approvedBy User?     @relation("ApprovedBy", fields: [approvedById], references: [id])
+
+  @@index([userId, endTs])
+  @@index([workOrderId, lineItemId])
+  @@index([userId, startTs])
+  @@index([lineItemId])
+  @@index([deletedAt])
+  @@index([approvalState])
+  @@index([editedAt])
+  @@map("time_entries")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  action      String
+  actorId     String   @map("actor_id")
+  beforeJson  String?  @map("before_json") @db.Text
+  afterJson   String?  @map("after_json") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+model Comment {
+  id           String     @id @default(cuid())
+  userId       String     @map("user_id")
+  workOrderId  String?    @map("work_order_id")
+  lineItemId   String?    @map("line_item_id")
+  content      String     @db.Text
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  deletedAt    DateTime?  @map("deleted_at")
+
+  user       User       @relation(fields: [userId], references: [id])
+  workOrder  WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  lineItem   LineItem?  @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+
+  @@index([workOrderId])
+  @@index([lineItemId])
+  @@index([userId])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@map("comments")
+}

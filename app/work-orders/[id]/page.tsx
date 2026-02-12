@@ -1,0 +1,478 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import Navbar from '@/components/Navbar';
+import AddLineItemModal from '@/components/AddLineItemModal';
+import CommentsSection from '@/components/CommentsSection';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'TECH';
+}
+
+interface TimeEntry {
+  id: string;
+  startTs: string;
+  endTs: string | null;
+  durationSeconds: number | null;
+  notes: string | null;
+  approvalState: string;
+  user: {
+    id: string;
+    name: string;
+  };
+}
+
+interface LineItem {
+  id: string;
+  description: string;
+  billable: boolean;
+  estimateMinutes: number | null;
+  status: string;
+  timeEntries: TimeEntry[];
+}
+
+interface WorkOrder {
+  id: string;
+  woNumber: string;
+  status: string;
+  priority: string | null;
+  createdAt: string;
+  customer: {
+    name: string;
+    billingInfo: string | null;
+  };
+  lineItems: LineItem[];
+}
+
+export default function WorkOrderDetailPage() {
+  const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+
+  const [user, setUser] = useState<User | null>(null);
+  const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
+  const [totals, setTotals] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [showAddLineItemModal, setShowAddLineItemModal] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+
+  const fetchData = async () => {
+    try {
+      const [userRes, woRes] = await Promise.all([
+        fetch('/api/auth/me'),
+        fetch(`/api/work-orders/${id}`),
+      ]);
+
+      if (!userRes.ok) {
+        router.push('/login');
+        return;
+      }
+
+      const userData = await userRes.json();
+      const woData = await woRes.json();
+
+      setUser(userData.user);
+      setWorkOrder(woData.workOrder);
+      setTotals(woData.totals);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [id]);
+
+  const handleApproveAll = async () => {
+    if (!confirm('Approve all time entries for this work order?')) return;
+
+    try {
+      const res = await fetch(`/api/work-orders/${id}/approve`, {
+        method: 'POST',
+      });
+
+      if (res.ok) {
+        await fetchData();
+        const data = await res.json();
+        alert(`Approved ${data.approvedCount} time entries`);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to approve time entries');
+      }
+    } catch (error) {
+      console.error('Error approving:', error);
+      alert('Failed to approve time entries');
+    }
+  };
+
+  const handleMarkReadyToBill = async () => {
+    if (!confirm('Mark this work order as Ready to Bill?')) return;
+
+    try {
+      const res = await fetch(`/api/work-orders/${id}/ready-to-bill`, {
+        method: 'POST',
+      });
+
+      if (res.ok) {
+        await fetchData();
+        alert('Work order marked as Ready to Bill');
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to mark as ready to bill');
+      }
+    } catch (error) {
+      console.error('Error marking ready to bill:', error);
+      alert('Failed to mark as ready to bill');
+    }
+  };
+
+  const handleExportPDF = () => {
+    window.open(`/api/export/pdf/${id}`, '_blank');
+  };
+
+  const handleExportCSV = () => {
+    window.open(`/api/export/csv/${id}`, '_blank');
+  };
+
+  const handleAddLineItemSuccess = () => {
+    setShowAddLineItemModal(false);
+    fetchData();
+  };
+
+  const toggleExpanded = (itemId: string) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(itemId)) {
+      newExpanded.delete(itemId);
+    } else {
+      newExpanded.add(itemId);
+    }
+    setExpandedItems(newExpanded);
+  };
+
+  const toggleSelectItem = (itemId: string) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(itemId)) {
+      newSelected.delete(itemId);
+    } else {
+      newSelected.add(itemId);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const handleBulkMarkDone = async () => {
+    if (selectedItems.size === 0) return;
+    if (!confirm(`Mark ${selectedItems.size} items as done?`)) return;
+
+    try {
+      const promises = Array.from(selectedItems).map((itemId) =>
+        fetch(`/api/line-items/${itemId}/done`, { method: 'POST' })
+      );
+      await Promise.all(promises);
+      setSelectedItems(new Set());
+      fetchData();
+    } catch (error) {
+      console.error('Error marking items as done:', error);
+      alert('Failed to mark items as done');
+    }
+  };
+
+  const formatMinutes = (minutes: number | null) => {
+    if (!minutes) return '0h 0m';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
+  const getApprovalColor = (state: string) => {
+    switch (state) {
+      case 'DRAFT':
+        return 'bg-gray-100 text-gray-800';
+      case 'SUBMITTED':
+        return 'bg-blue-100 text-blue-800';
+      case 'APPROVED':
+        return 'bg-green-100 text-green-800';
+      case 'LOCKED':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user || !workOrder) {
+    return null;
+  }
+
+  const unapprovedCount = workOrder.lineItems.reduce(
+    (sum, item) =>
+      sum +
+      item.timeEntries.filter((e) => e.approvalState === 'DRAFT' || e.approvalState === 'SUBMITTED')
+        .length,
+    0
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar user={user} />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <button
+            onClick={() => router.back()}
+            className="text-blue-600 hover:text-blue-800 mb-4"
+          >
+            ← Back to Work Orders
+          </button>
+
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {workOrder.woNumber}
+                </h1>
+                <p className="text-lg text-gray-700">{workOrder.customer.name}</p>
+                {workOrder.customer.billingInfo && (
+                  <p className="text-sm text-gray-500">{workOrder.customer.billingInfo}</p>
+                )}
+              </div>
+              <div className="text-right">
+                <div className="mb-2">
+                  <span
+                    className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                      workOrder.status === 'READY_TO_BILL'
+                        ? 'bg-purple-100 text-purple-800'
+                        : workOrder.status === 'CLOSED'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}
+                  >
+                    {workOrder.status.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                {workOrder.priority && (
+                  <span
+                    className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                      workOrder.priority === 'HIGH'
+                        ? 'bg-red-100 text-red-800'
+                        : workOrder.priority === 'MEDIUM'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-green-100 text-green-800'
+                    }`}
+                  >
+                    {workOrder.priority} Priority
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div>
+                <div className="text-sm text-gray-600">Estimate</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {formatMinutes(totals?.estimateMinutes)}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600">Tracked</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {formatMinutes(totals?.trackedMinutes)}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600">Variance</div>
+                <div
+                  className={`text-2xl font-bold ${
+                    totals?.varianceMinutes > 0 ? 'text-red-600' : 'text-green-600'
+                  }`}
+                >
+                  {totals?.varianceMinutes > 0 ? '+' : ''}
+                  {formatMinutes(Math.abs(totals?.varianceMinutes))}
+                </div>
+              </div>
+            </div>
+
+            {user.role === 'ADMIN' && (
+              <div className="mt-6 flex space-x-3">
+                <button
+                  onClick={handleApproveAll}
+                  disabled={unapprovedCount === 0}
+                  className="btn-success disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Approve All Time ({unapprovedCount})
+                </button>
+                <button
+                  onClick={handleMarkReadyToBill}
+                  disabled={workOrder.status === 'READY_TO_BILL' || unapprovedCount > 0}
+                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Mark Ready to Bill
+                </button>
+                <button onClick={handleExportPDF} className="btn-secondary">
+                  Export PDF
+                </button>
+                <button onClick={handleExportCSV} className="btn-secondary">
+                  Export CSV
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Line Items</h2>
+          <button
+            onClick={() => setShowAddLineItemModal(true)}
+            className="btn-primary text-sm"
+          >
+            + Add Line Item
+          </button>
+        </div>
+
+        {/* Bulk Actions Bar */}
+        {user.role === 'ADMIN' && selectedItems.size > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex justify-between items-center">
+            <div className="text-sm text-blue-900">
+              {selectedItems.size} item{selectedItems.size > 1 ? 's' : ''} selected
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={handleBulkMarkDone}
+                className="btn-success text-sm"
+              >
+                Mark as Done
+              </button>
+              <button
+                onClick={() => setSelectedItems(new Set())}
+                className="btn-secondary text-sm"
+              >
+                Clear Selection
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {workOrder.lineItems.map((item) => {
+            const totalMinutes = item.timeEntries.reduce(
+              (sum, e) => sum + Math.floor((e.durationSeconds || 0) / 60),
+              0
+            );
+            const isExpanded = expandedItems.has(item.id);
+
+            return (
+              <div key={item.id} className="bg-white shadow-md rounded-lg overflow-hidden">
+                <div className="p-4 hover:bg-gray-50">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-start space-x-3 flex-1">
+                      {user.role === 'ADMIN' && (
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.has(item.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleSelectItem(item.id);
+                          }}
+                          className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                      )}
+                      <div className="flex-1 cursor-pointer" onClick={() => toggleExpanded(item.id)}>
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h3 className="font-semibold text-gray-900">{item.description}</h3>
+                        {item.status === 'DONE' && (
+                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            DONE
+                          </span>
+                        )}
+                        {!item.billable && (
+                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                            NON-BILLABLE
+                          </span>
+                        )}
+                      </div>
+                        <div className="text-sm text-gray-600">
+                          Estimate: {formatMinutes(item.estimateMinutes)} | Tracked:{' '}
+                          {formatMinutes(totalMinutes)} | Entries: {item.timeEntries.length}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-gray-400 cursor-pointer" onClick={() => toggleExpanded(item.id)}>
+                      {isExpanded ? '▼' : '▶'}
+                    </div>
+                  </div>
+                </div>
+
+                {isExpanded && item.timeEntries.length > 0 && (
+                  <div className="border-t border-gray-200 p-4 bg-gray-50">
+                    <div className="space-y-2">
+                      {item.timeEntries.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="bg-white p-3 rounded border border-gray-200"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {entry.user.name}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {new Date(entry.startTs).toLocaleString()}
+                                {entry.endTs &&
+                                  ` - ${new Date(entry.endTs).toLocaleTimeString()}`}
+                              </div>
+                              {entry.notes && (
+                                <div className="text-sm text-gray-700 mt-1">{entry.notes}</div>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm font-semibold text-gray-900">
+                                {formatMinutes(entry.durationSeconds ? Math.floor(entry.durationSeconds / 60) : null)}
+                              </div>
+                              <span
+                                className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getApprovalColor(
+                                  entry.approvalState
+                                )}`}
+                              >
+                                {entry.approvalState}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Comments Section */}
+        <div className="mt-6 bg-white shadow-md rounded-lg p-6">
+          <CommentsSection workOrderId={id} currentUser={user} />
+        </div>
+      </div>
+
+      {showAddLineItemModal && (
+        <AddLineItemModal
+          workOrderId={id}
+          onClose={() => setShowAddLineItemModal(false)}
+          onSuccess={handleAddLineItemSuccess}
+        />
+      )}
+    </div>
+  );
+}
