@@ -18,7 +18,8 @@
       "Bash(DATABASE_URL=\"postgresql://postgres:9XPQ%406%2A4%23f%2Fsyxw@db.enwmtwlpykmrrkzdbzyg.supabase.co:5432/postgres?sslmode=require\" npx prisma migrate deploy:*)",
       "Bash(npx prisma migrate diff:*)",
       "Bash(npx prisma generate:*)",
-      "Bash(npm run prisma:seed:*)"
+      "Bash(npm run prisma:seed:*)",
+      "Bash(git rm:*)"
     ]
   }
 }
