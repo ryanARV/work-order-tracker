@@ -33,7 +33,7 @@ export default function DailyHoursChart({ data }: DailyHoursChartProps) {
               borderRadius: '6px',
               fontSize: '12px'
             }}
-            formatter={(value: number) => [`${value} hours`, 'Hours']}
+            formatter={(value) => [`${value || 0} hours`, 'Hours']}
           />
           <Bar dataKey="hours" fill="#3B82F6" radius={[4, 4, 0, 0]} />
         </BarChart>
