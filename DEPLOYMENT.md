@@ -4,33 +4,38 @@ This document provides step-by-step instructions for deploying to production and
 
 ## Quick Deployment Workflow
 
-### 1. Deploy Code to Production
+### Standard Deployment Process (Code + Database)
 
+This is the complete workflow for deploying changes to production:
+
+#### Step 1: Commit and Push to GitHub
 ```bash
-# Commit your changes
+# Stage all changes
 git add .
+
+# Commit with descriptive message
 git commit -m "Your commit message"
 
-# Push to GitHub (triggers automatic Vercel deployment)
+# Push to main branch (triggers automatic Vercel deployment)
 git push origin main
 ```
 
-**Note**: Vercel automatically deploys when you push to the `main` branch. No manual deployment needed.
+**Note**: Pushing to the `main` branch automatically triggers Vercel deployment. The deployment typically takes 1-2 minutes.
 
 ---
 
-### 2. Refresh Production Database
+#### Step 2: Refresh Production Database
 
-When you need to reseed or reset the production database with sample data:
+After code is deployed, refresh the production database with sample data:
 
-#### Step 1: Switch to Production Environment
+##### 2a. Switch to Production Environment
 ```bash
 # Backup local .env and use production .env.cloud
 mv .env .env.backup
 cp .env.cloud .env
 ```
 
-#### Step 2: Check Migration Status
+##### 2b. Check Migration Status
 ```bash
 # Verify all migrations are applied
 npx prisma migrate status --schema=prisma/schema.prisma
@@ -43,7 +48,7 @@ If migrations are needed, run:
 npx prisma migrate deploy --schema=prisma/schema.prisma
 ```
 
-#### Step 3: Reseed Sample Data
+##### 2c. Reseed Sample Data
 ```bash
 # Run the sample data seeding script
 npm run seed:sample
@@ -62,11 +67,23 @@ This creates:
 - Service Writer: david.writer@shop.com
 - Parts Manager: lisa.parts@shop.com
 
-#### Step 4: Restore Local Environment
+##### 2d. Restore Local Environment
 ```bash
 # Switch back to local environment
 mv .env.backup .env
 ```
+
+---
+
+### Summary of Complete Deployment
+
+When you run through the full deployment process, you will:
+1. ✅ Push code to GitHub main branch → Triggers Vercel deployment
+2. ✅ Switch to production environment files
+3. ✅ Verify/apply database migrations
+4. ✅ Reseed sample data
+5. ✅ Restore local environment
+6. ✅ Verify production site is working
 
 ---
 
@@ -184,24 +201,69 @@ Consider setting up:
 
 ## Quick Reference Commands
 
+### Full Deployment (Code + Database) - RECOMMENDED
+Complete deployment workflow including git push to production:
+
 ```bash
-# Full deployment + DB refresh (copy/paste all at once)
+# Stage, commit, and push to GitHub (triggers Vercel deployment)
 git add . && \
-git commit -m "Deploy changes" && \
+git commit -m "Your deployment message" && \
 git push origin main && \
+
+# Switch to production environment
 mv .env .env.backup && \
 cp .env.cloud .env && \
+
+# Check migrations and reseed database
 npx prisma migrate status --schema=prisma/schema.prisma && \
 npm run seed:sample && \
+
+# Restore local environment
 mv .env.backup .env
 
-# Just DB refresh (no code deploy)
+echo "✅ Deployment complete! Check Vercel for deployment status."
+```
+
+### Database Refresh Only (No Code Changes)
+Use this when you only need to reseed the production database:
+
+```bash
+# Switch to production environment
 mv .env .env.backup && \
 cp .env.cloud .env && \
+
+# Reseed database
 npm run seed:sample && \
+
+# Restore local environment
 mv .env.backup .env
+
+echo "✅ Database refresh complete!"
+```
+
+### Code Deployment Only (No Database Changes)
+Use this when you only have code changes and don't need to refresh the database:
+
+```bash
+# Stage, commit, and push to GitHub
+git add . && \
+git commit -m "Your commit message" && \
+git push origin main
+
+echo "✅ Code pushed to GitHub! Vercel will deploy automatically."
+```
+
+### Check Git Status
+Before deploying, check what changes will be committed:
+
+```bash
+# View staged and unstaged changes
+git status
+
+# View detailed diff of changes
+git diff
 ```
 
 ---
 
-**Last Updated**: 2026-02-12
+**Last Updated**: 2026-02-12 (Updated to emphasize git push workflow)
