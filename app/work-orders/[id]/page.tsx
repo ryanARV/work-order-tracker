@@ -10,6 +10,7 @@ import WorkOrderPartsTable from '@/components/WorkOrderPartsTable';
 import PartPickerModal from '@/components/PartPickerModal';
 import AdjustTimeModal from '@/components/AdjustTimeModal';
 import AssignTechModal from '@/components/AssignTechModal';
+import { useToast } from '@/components/ToastProvider';
 
 interface User {
   id: string;
@@ -28,6 +29,7 @@ interface TimeEntry {
   approvalState: string;
   editedReason: string | null;
   editedAt: string | null;
+  isGoodwill: boolean;
   user: {
     id: string;
     name: string;
@@ -62,6 +64,10 @@ interface WorkOrder {
   status: string;
   priority: string | null;
   createdAt: string;
+  isOutOfService: boolean;
+  qcApprovedById: string | null;
+  qcApprovedAt: string | null;
+  qcRejectedReason: string | null;
   customer: {
     name: string;
     billingInfo: string | null;
@@ -73,6 +79,7 @@ export default function WorkOrderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const toast = useToast();
 
   const [user, setUser] = useState<User | null>(null);
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
@@ -177,6 +184,87 @@ export default function WorkOrderDetailPage() {
 
   const handleExportCSV = () => {
     window.open(`/api/export/csv/${id}`, '_blank');
+  };
+
+  const handleToggleOoS = async () => {
+    if (!workOrder) return;
+
+    const newStatus = !workOrder.isOutOfService;
+    const confirmMessage = newStatus
+      ? '⚠️ Mark this work order as OUT OF SERVICE? This indicates an emergency repair.'
+      : 'Remove OUT OF SERVICE flag from this work order?';
+
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const res = await fetch(`/api/work-orders/${id}/toggle-oos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isOutOfService: newStatus }),
+      });
+
+      if (res.ok) {
+        await fetchData();
+        toast.success(newStatus ? 'Marked as OUT OF SERVICE' : 'OUT OF SERVICE flag removed');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to update OoS status');
+      }
+    } catch (error) {
+      console.error('Error toggling OoS:', error);
+      toast.error('Failed to update OoS status');
+    }
+  };
+
+  const handleQcApprove = async () => {
+    if (!confirm('Approve this work order for billing?\n\nThis will move it to READY TO BILL status.')) return;
+
+    try {
+      const res = await fetch(`/api/work-orders/${id}/qc-approve`, {
+        method: 'POST',
+      });
+
+      if (res.ok) {
+        await fetchData();
+        toast.success('Work order approved and moved to Ready to Bill');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to approve work order');
+      }
+    } catch (error) {
+      console.error('Error approving QC:', error);
+      toast.error('Failed to approve work order');
+    }
+  };
+
+  const handleQcReject = async () => {
+    const reason = prompt('Please enter the reason for rejection (minimum 10 characters):');
+
+    if (!reason) return; // User cancelled
+
+    if (reason.trim().length < 10) {
+      toast.error('Rejection reason must be at least 10 characters');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/work-orders/${id}/qc-reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
+
+      if (res.ok) {
+        await fetchData();
+        toast.success('Work order rejected and returned to In Progress');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to reject work order');
+      }
+    } catch (error) {
+      console.error('Error rejecting QC:', error);
+      toast.error('Failed to reject work order');
+    }
   };
 
   const handleAddLineItemSuccess = () => {
@@ -408,26 +496,43 @@ export default function WorkOrderDetailPage() {
                     {workOrder.priority} Priority
                   </span>
                 )}
+                {workOrder.isOutOfService && (
+                  <span className="px-2 md:px-3 py-1 text-xs md:text-sm font-bold rounded-full bg-red-600 text-white shadow-md animate-pulse">
+                    🚨 OUT OF SERVICE
+                  </span>
+                )}
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 md:gap-4 p-3 md:p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 p-3 md:p-4 bg-gray-50 rounded-lg">
               <div>
-                <div className="text-xs md:text-sm text-gray-600">Estimate</div>
-                <div className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
+                <div className="text-xs text-gray-600">Estimate</div>
+                <div className="text-lg md:text-xl font-bold text-gray-900">
                   {formatMinutes(totals?.estimateMinutes)}
                 </div>
               </div>
               <div>
-                <div className="text-xs md:text-sm text-gray-600">Tracked</div>
-                <div className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
+                <div className="text-xs text-gray-600">Billable</div>
+                <div className="text-lg md:text-xl font-bold text-blue-600">
+                  {formatMinutes(totals?.billableMinutes)}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-600">Goodwill</div>
+                <div className="text-lg md:text-xl font-bold text-purple-600">
+                  {formatMinutes(totals?.goodwillMinutes)}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-600">Total</div>
+                <div className="text-lg md:text-xl font-bold text-gray-900">
                   {formatMinutes(totals?.trackedMinutes)}
                 </div>
               </div>
               <div>
-                <div className="text-xs md:text-sm text-gray-600">Variance</div>
+                <div className="text-xs text-gray-600">Variance</div>
                 <div
-                  className={`text-lg md:text-xl lg:text-2xl font-bold ${
+                  className={`text-lg md:text-xl font-bold ${
                     totals?.varianceMinutes > 0 ? 'text-red-600' : 'text-green-600'
                   }`}
                 >
@@ -437,53 +542,88 @@ export default function WorkOrderDetailPage() {
               </div>
             </div>
 
-            {user.role === 'ADMIN' && (
+            {(['ADMIN', 'SERVICE_WRITER', 'MANAGER'].includes(user.role)) && (
               <div className="mt-4 md:mt-6 flex flex-wrap gap-2 md:gap-3">
+                {/* Out of Service Toggle - ADMIN, SERVICE_WRITER, MANAGER */}
                 <button
-                  onClick={handleApproveAll}
-                  disabled={unapprovedCount === 0}
-                  className="btn-success disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm"
+                  onClick={handleToggleOoS}
+                  className={`text-xs md:text-sm font-medium px-4 py-2.5 rounded-lg transition-all ${
+                    workOrder.isOutOfService
+                      ? 'bg-red-600 hover:bg-red-700 text-white shadow-md'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300'
+                  }`}
                 >
-                  Approve All ({unapprovedCount})
-                </button>
-                <button
-                  onClick={handleMarkReadyToBill}
-                  disabled={workOrder.status === 'READY_TO_BILL' || unapprovedCount > 0}
-                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm"
-                >
-                  Ready to Bill
+                  {workOrder.isOutOfService ? '🚨 Remove OoS' : '🚨 Mark OoS'}
                 </button>
 
-                {/* Export buttons - show split options if mixed bill types */}
-                {hasMixedBillTypes ? (
+                {/* QC Approval Buttons - Only ADMIN and MANAGER when status is QC */}
+                {workOrder.status === 'QC' && ['ADMIN', 'MANAGER'].includes(user.role) && (
                   <>
-                    <button onClick={() => handleExportPDFByType('CUSTOMER_PAY')} className="btn-secondary text-xs md:text-sm">
-                      PDF (Cust.)
+                    <button
+                      onClick={handleQcApprove}
+                      className="btn-success text-xs md:text-sm"
+                    >
+                      ✓ QC Approve
                     </button>
-                    <button onClick={() => handleExportPDFByType('WARRANTY')} className="btn-secondary text-xs md:text-sm">
-                      PDF (Warr.)
+                    <button
+                      onClick={handleQcReject}
+                      className="btn-danger text-xs md:text-sm"
+                    >
+                      ✗ QC Reject
                     </button>
                   </>
-                ) : hasCustomerPay ? (
-                  <button onClick={() => handleExportPDFByType('CUSTOMER_PAY')} className="btn-secondary text-xs md:text-sm">
-                    <span className="hidden md:inline">Export PDF (Customer Pay)</span>
-                    <span className="md:hidden">PDF</span>
-                  </button>
-                ) : hasWarranty ? (
-                  <button onClick={() => handleExportPDFByType('WARRANTY')} className="btn-secondary text-xs md:text-sm">
-                    <span className="hidden md:inline">Export PDF (Warranty)</span>
-                    <span className="md:hidden">PDF</span>
-                  </button>
-                ) : (
-                  <button onClick={handleExportPDF} className="btn-secondary text-xs md:text-sm">
-                    <span className="hidden md:inline">Export PDF</span>
-                    <span className="md:hidden">PDF</span>
-                  </button>
                 )}
 
-                <button onClick={handleExportCSV} className="btn-secondary text-xs md:text-sm">
-                  CSV
-                </button>
+                {/* Admin-only buttons */}
+                {user.role === 'ADMIN' && (
+                  <>
+                    <button
+                      onClick={handleApproveAll}
+                      disabled={unapprovedCount === 0}
+                      className="btn-success disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm"
+                    >
+                      Approve All ({unapprovedCount})
+                    </button>
+                    <button
+                      onClick={handleMarkReadyToBill}
+                      disabled={workOrder.status === 'READY_TO_BILL' || unapprovedCount > 0}
+                      className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm"
+                    >
+                      Ready to Bill
+                    </button>
+
+                    {/* Export buttons - show split options if mixed bill types */}
+                    {hasMixedBillTypes ? (
+                      <>
+                        <button onClick={() => handleExportPDFByType('CUSTOMER_PAY')} className="btn-secondary text-xs md:text-sm">
+                          PDF (Cust.)
+                        </button>
+                        <button onClick={() => handleExportPDFByType('WARRANTY')} className="btn-secondary text-xs md:text-sm">
+                          PDF (Warr.)
+                        </button>
+                      </>
+                    ) : hasCustomerPay ? (
+                      <button onClick={() => handleExportPDFByType('CUSTOMER_PAY')} className="btn-secondary text-xs md:text-sm">
+                        <span className="hidden md:inline">Export PDF (Customer Pay)</span>
+                        <span className="md:hidden">PDF</span>
+                      </button>
+                    ) : hasWarranty ? (
+                      <button onClick={() => handleExportPDFByType('WARRANTY')} className="btn-secondary text-xs md:text-sm">
+                        <span className="hidden md:inline">Export PDF (Warranty)</span>
+                        <span className="md:hidden">PDF</span>
+                      </button>
+                    ) : (
+                      <button onClick={handleExportPDF} className="btn-secondary text-xs md:text-sm">
+                        <span className="hidden md:inline">Export PDF</span>
+                        <span className="md:hidden">PDF</span>
+                      </button>
+                    )}
+
+                    <button onClick={handleExportCSV} className="btn-secondary text-xs md:text-sm">
+                      CSV
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -708,6 +848,11 @@ export default function WorkOrderDetailPage() {
                                 <div className="text-xs md:text-sm font-medium text-gray-900">
                                   {entry.user.name}
                                 </div>
+                                {entry.isGoodwill && (
+                                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                    GOODWILL
+                                  </span>
+                                )}
                                 {entry.editedAt && (
                                   <span
                                     className="px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 cursor-help"

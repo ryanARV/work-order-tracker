@@ -11,7 +11,8 @@
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
+    "seed:sample": "tsx scripts/seed-sample-data.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -61,22 +61,30 @@ export async function GET(
       0
     );
 
-    const totalTrackedMinutes = workOrder.lineItems.reduce(
-      (sum, item) =>
-        sum +
-        item.timeEntries.reduce(
-          (itemSum, entry) => itemSum + Math.floor((entry.durationSeconds || 0) / 60),
-          0
-        ),
-      0
-    );
+    let totalTrackedMinutes = 0;
+    let goodwillMinutes = 0;
+    let billableMinutes = 0;
+
+    workOrder.lineItems.forEach((item) => {
+      item.timeEntries.forEach((entry) => {
+        const minutes = Math.floor((entry.durationSeconds || 0) / 60);
+        totalTrackedMinutes += minutes;
+        if (entry.isGoodwill) {
+          goodwillMinutes += minutes;
+        } else {
+          billableMinutes += minutes;
+        }
+      });
+    });
 
     return NextResponse.json({
       workOrder,
       totals: {
         estimateMinutes: totalEstimateMinutes,
         trackedMinutes: totalTrackedMinutes,
-        varianceMinutes: totalTrackedMinutes - totalEstimateMinutes,
+        billableMinutes,
+        goodwillMinutes,
+        varianceMinutes: billableMinutes - totalEstimateMinutes,
       },
     });
   } catch (error: any) {

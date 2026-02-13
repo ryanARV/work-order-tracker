@@ -56,6 +56,7 @@ export default function MyWorkPage() {
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [pauseModalDescription, setPauseModalDescription] = useState('');
   const [pendingNotes, setPendingNotes] = useState<string | undefined>();
+  const [pendingGoodwill, setPendingGoodwill] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -109,9 +110,10 @@ export default function MyWorkPage() {
     }
   };
 
-  const handleStopTimerClick = (notes?: string) => {
+  const handleStopTimerClick = (notes?: string, isGoodwill?: boolean) => {
     if (activeTimer) {
       setPendingNotes(notes);
+      setPendingGoodwill(isGoodwill || false);
       setPauseModalDescription(activeTimer.lineItem.description);
       setShowPauseModal(true);
     }
@@ -122,12 +124,13 @@ export default function MyWorkPage() {
       const res = await fetch('/api/timer/stop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pauseReason, notes: pendingNotes }),
+        body: JSON.stringify({ pauseReason, notes: pendingNotes, isGoodwill: pendingGoodwill }),
       });
 
       if (res.ok) {
         setShowPauseModal(false);
         setPendingNotes(undefined);
+        setPendingGoodwill(false);
         await fetchData();
         toast.success('Timer stopped successfully');
       } else {

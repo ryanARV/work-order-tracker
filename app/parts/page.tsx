@@ -2,8 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Navbar from '@/components/Navbar';
 import PartModal from '@/components/PartModal';
 import InventoryAdjustmentModal from '@/components/InventoryAdjustmentModal';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'TECH' | 'SERVICE_WRITER' | 'PARTS' | 'MANAGER';
+}
 
 interface Part {
   id: string;
@@ -22,6 +30,7 @@ interface Part {
 
 export default function PartsPage() {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [parts, setParts] = useState<Part[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -31,8 +40,40 @@ export default function PartsPage() {
   const [showAdjustModal, setShowAdjustModal] = useState(false);
 
   useEffect(() => {
-    fetchParts();
+    fetchData();
   }, [search, showLowStockOnly]);
+
+  const fetchData = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (showLowStockOnly) params.set('lowStock', 'true');
+
+      const [userRes, partsRes] = await Promise.all([
+        fetch('/api/auth/me'),
+        fetch(`/api/parts?${params.toString()}`),
+      ]);
+
+      if (!userRes.ok) {
+        router.push('/login');
+        return;
+      }
+
+      if (!partsRes.ok) {
+        throw new Error('Failed to fetch parts');
+      }
+
+      const userData = await userRes.json();
+      const partsData = await partsRes.json();
+
+      setUser(userData.user);
+      setParts(partsData.parts || []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchParts = async () => {
     try {
@@ -41,21 +82,12 @@ export default function PartsPage() {
       if (showLowStockOnly) params.set('lowStock', 'true');
 
       const res = await fetch(`/api/parts?${params.toString()}`);
-
-      if (!res.ok) {
-        if (res.status === 401) {
-          router.push('/login');
-          return;
-        }
-        throw new Error('Failed to fetch parts');
-      }
+      if (!res.ok) throw new Error('Failed to fetch parts');
 
       const data = await res.json();
       setParts(data.parts || []);
     } catch (error) {
       console.error('Error fetching parts:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -92,9 +124,15 @@ export default function PartsPage() {
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar user={user} />
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-8">
         {/* Header */}
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>

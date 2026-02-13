@@ -135,11 +135,19 @@ export default function WIPAgingPage() {
         />
 
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">WIP Aging Report</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1">
-            Track how long work orders have been in progress
-          </p>
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">WIP Aging Report</h1>
+            <p className="text-sm md:text-base text-gray-600 mt-1">
+              Track how long work orders have been in progress
+            </p>
+          </div>
+          <button
+            onClick={() => window.open('/api/reports/wip-aging/export', '_blank')}
+            className="btn-secondary whitespace-nowrap text-sm"
+          >
+            📥 Export CSV
+          </button>
         </div>
 
         {/* Summary Cards */}

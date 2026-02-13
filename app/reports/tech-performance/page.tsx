@@ -123,11 +123,24 @@ export default function TechPerformancePage() {
         />
 
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Technician Performance Report</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1">
-            Track individual technician productivity and efficiency
-          </p>
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Technician Performance Report</h1>
+            <p className="text-sm md:text-base text-gray-600 mt-1">
+              Track individual technician productivity and efficiency
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (startDate) params.set('startDate', startDate);
+              if (endDate) params.set('endDate', endDate);
+              window.open(`/api/reports/tech-performance/export?${params.toString()}`, '_blank');
+            }}
+            className="btn-secondary whitespace-nowrap text-sm"
+          >
+            📥 Export CSV
+          </button>
         </div>
 
         {/* Filters */}

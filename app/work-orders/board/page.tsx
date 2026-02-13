@@ -3,6 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'TECH' | 'SERVICE_WRITER' | 'PARTS' | 'MANAGER';
+}
 
 interface WorkOrderCard {
   id: string;
@@ -17,6 +25,7 @@ interface WorkOrderCard {
   totalHours: number;
   assignedTechs: { id: string; name: string }[];
   partsStatus: 'NO_PARTS' | 'ALL_ISSUED' | 'PARTIALLY_ISSUED' | 'NOT_ISSUED';
+  isOutOfService: boolean;
 }
 
 interface BoardData {
@@ -41,6 +50,7 @@ const COLUMN_CONFIG = [
 
 export default function KanbanBoardPage() {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [boardData, setBoardData] = useState<BoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [draggedCard, setDraggedCard] = useState<{
@@ -53,25 +63,47 @@ export default function KanbanBoardPage() {
   } | null>(null);
 
   useEffect(() => {
-    fetchBoard();
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const [userRes, boardRes] = await Promise.all([
+        fetch('/api/auth/me'),
+        fetch('/api/work-orders/board'),
+      ]);
+
+      if (!userRes.ok) {
+        router.push('/login');
+        return;
+      }
+
+      if (!boardRes.ok) {
+        throw new Error('Failed to fetch board');
+      }
+
+      const userData = await userRes.json();
+      const boardData = await boardRes.json();
+
+      setUser(userData.user);
+      setBoardData(boardData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchBoard = async () => {
     try {
       const res = await fetch('/api/work-orders/board');
       if (!res.ok) {
-        if (res.status === 401) {
-          router.push('/login');
-          return;
-        }
         throw new Error('Failed to fetch board');
       }
       const data = await res.json();
       setBoardData(data);
     } catch (error) {
       console.error('Error fetching board:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -221,9 +253,16 @@ export default function KanbanBoardPage() {
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar user={user} />
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-8">
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="section-header">Work Order Board</h1>
           <p className="section-subheader">
@@ -289,9 +328,18 @@ export default function KanbanBoardPage() {
                     className={`bg-white rounded-lg shadow-sm hover:shadow-md p-3 md:p-4 cursor-move transition-all border-l-4 ${
                       selectedCard?.id === card.id
                         ? 'border-green-500 ring-2 ring-green-400 shadow-md'
+                        : card.isOutOfService
+                        ? 'border-red-600 ring-2 ring-red-400'
                         : 'border-blue-500'
                     }`}
                   >
+                    {card.isOutOfService && (
+                      <div className="mb-2 -mx-3 md:-mx-4 -mt-3 md:-mt-4 px-3 py-2 bg-red-600 text-white text-xs font-bold rounded-t-lg flex items-center gap-1">
+                        <span>🚨</span>
+                        <span className="hidden md:inline">OUT OF SERVICE</span>
+                        <span className="md:hidden">OoS</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-start mb-2">
                       <Link
                         href={`/work-orders/${card.id}`}
@@ -343,6 +391,7 @@ export default function KanbanBoardPage() {
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );

@@ -3,6 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'TECH' | 'SERVICE_WRITER' | 'PARTS' | 'MANAGER';
+}
 
 interface Estimate {
   id: string;
@@ -22,35 +30,43 @@ interface Estimate {
 
 export default function EstimatesPage() {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
-    fetchEstimates();
+    fetchData();
   }, [search, statusFilter]);
 
-  const fetchEstimates = async () => {
+  const fetchData = async () => {
     try {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
       if (statusFilter) params.set('status', statusFilter);
 
-      const res = await fetch(`/api/estimates?${params.toString()}`);
+      const [userRes, estimatesRes] = await Promise.all([
+        fetch('/api/auth/me'),
+        fetch(`/api/estimates?${params.toString()}`),
+      ]);
 
-      if (!res.ok) {
-        if (res.status === 401) {
-          router.push('/login');
-          return;
-        }
+      if (!userRes.ok) {
+        router.push('/login');
+        return;
+      }
+
+      if (!estimatesRes.ok) {
         throw new Error('Failed to fetch estimates');
       }
 
-      const data = await res.json();
-      setEstimates(data.estimates || []);
+      const userData = await userRes.json();
+      const estimatesData = await estimatesRes.json();
+
+      setUser(userData.user);
+      setEstimates(estimatesData.estimates || []);
     } catch (error) {
-      console.error('Error fetching estimates:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -120,9 +136,15 @@ export default function EstimatesPage() {
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar user={user} />
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-8">
         {/* Header */}
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>

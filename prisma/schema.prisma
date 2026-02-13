@@ -92,6 +92,7 @@ model User {
   partTransactions    PartTransaction[]
   issuedPartItems     WorkOrderPartItem[]  @relation("IssuedBy")
   adjustedTimeEntries TimeEntry[]          @relation("AdjustedBy")
+  qcApprovedWorkOrders WorkOrder[]         @relation("QCApprovedBy")
 
   @@index([deletedAt])
   @@map("users")
@@ -128,6 +129,10 @@ model WorkOrder {
   status                      WorkOrderStatus  @default(DRAFT)
   priority                    String?
   warrantyAuthorizationNumber String?          @map("warranty_authorization_number")
+  isOutOfService              Boolean          @default(false) @map("is_out_of_service")
+  qcApprovedById              String?          @map("qc_approved_by_id")
+  qcApprovedAt                DateTime?        @map("qc_approved_at")
+  qcRejectedReason            String?          @map("qc_rejected_reason")
   kanbanColumn                KanbanColumn?    @map("kanban_column")
   kanbanPosition              Int?             @map("kanban_position")
   convertedFromEstimateId     String?          @unique @map("converted_from_estimate_id")
@@ -136,12 +141,13 @@ model WorkOrder {
   closedAt                    DateTime?        @map("closed_at")
   deletedAt                   DateTime?        @map("deleted_at")
 
-  customer            Customer            @relation(fields: [customerId], references: [id])
-  convertedFromEstimate Estimate?         @relation("ConvertedToWorkOrder", fields: [convertedFromEstimateId], references: [id])
-  lineItems           LineItem[]
-  timeEntries         TimeEntry[]
-  comments            Comment[]
-  partItems           WorkOrderPartItem[]
+  customer              Customer            @relation(fields: [customerId], references: [id])
+  convertedFromEstimate Estimate?           @relation("ConvertedToWorkOrder", fields: [convertedFromEstimateId], references: [id])
+  qcApprovedBy          User?               @relation("QCApprovedBy", fields: [qcApprovedById], references: [id])
+  lineItems             LineItem[]
+  timeEntries           TimeEntry[]
+  comments              Comment[]
+  partItems             WorkOrderPartItem[]
 
   @@index([customerId])
   @@index([deletedAt])
@@ -201,6 +207,7 @@ model TimeEntry {
   durationSeconds Int?          @map("duration_seconds")
   notes           String?
   pauseReason     String?       @map("pause_reason")
+  isGoodwill      Boolean       @default(false) @map("is_goodwill")
   approvalState   ApprovalState @default(DRAFT) @map("approval_state")
   approvedById    String?       @map("approved_by")
   approvedAt      DateTime?     @map("approved_at")

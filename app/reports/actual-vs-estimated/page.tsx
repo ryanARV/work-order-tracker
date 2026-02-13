@@ -117,11 +117,25 @@ export default function ActualVsEstimatedPage() {
         />
 
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Actual vs Estimated Report</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1">
-            Compare estimated time vs actual tracked time for all work orders
-          </p>
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Actual vs Estimated Report</h1>
+            <p className="text-sm md:text-base text-gray-600 mt-1">
+              Compare estimated time vs actual tracked time for all work orders
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (startDate) params.set('startDate', startDate);
+              if (endDate) params.set('endDate', endDate);
+              if (statusFilter) params.set('status', statusFilter);
+              window.open(`/api/reports/actual-vs-estimated/export?${params.toString()}`, '_blank');
+            }}
+            className="btn-secondary whitespace-nowrap text-sm"
+          >
+            📥 Export CSV
+          </button>
         </div>
 
         {/* Filters */}

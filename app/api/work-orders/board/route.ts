@@ -121,6 +121,7 @@ export async function GET(request: NextRequest) {
           totalHours: totalSeconds / 3600,
           assignedTechs: Array.from(assignedTechs).map((t: string) => JSON.parse(t)),
           partsStatus,
+          isOutOfService: wo.isOutOfService,
         });
       }
     });

@@ -16,13 +16,14 @@ interface ActiveTimerProps {
       description: string;
     };
   };
-  onStop: (notes?: string) => void;
+  onStop: (notes?: string, isGoodwill?: boolean) => void;
 }
 
 export default function ActiveTimer({ timer, onStop }: ActiveTimerProps) {
   const [elapsed, setElapsed] = useState(0);
   const [notes, setNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
+  const [isGoodwill, setIsGoodwill] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -50,9 +51,10 @@ export default function ActiveTimer({ timer, onStop }: ActiveTimerProps) {
   };
 
   const handleStop = () => {
-    onStop(notes || undefined);
+    onStop(notes || undefined, isGoodwill);
     setNotes('');
     setShowNotes(false);
+    setIsGoodwill(false);
   };
 
   return (
@@ -83,6 +85,19 @@ export default function ActiveTimer({ timer, onStop }: ActiveTimerProps) {
           rows={2}
         />
       )}
+
+      <div className="mb-3 flex items-center">
+        <input
+          type="checkbox"
+          id="goodwill-checkbox"
+          checked={isGoodwill}
+          onChange={(e) => setIsGoodwill(e.target.checked)}
+          className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+        />
+        <label htmlFor="goodwill-checkbox" className="ml-2 block text-sm text-gray-700">
+          Mark as <span className="font-semibold text-purple-700">Goodwill</span> (non-billable)
+        </label>
+      </div>
 
       <div className="flex space-x-2">
         <button
