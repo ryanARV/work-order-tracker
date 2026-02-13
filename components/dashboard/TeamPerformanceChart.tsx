@@ -51,7 +51,7 @@ export default function TeamPerformanceChart({ data }: TeamPerformanceChartProps
               borderRadius: '6px',
               fontSize: '12px'
             }}
-            formatter={(value) => [`${(value || 0).toFixed(1)}%`, 'Efficiency']}
+            formatter={(value) => [`${(Number(value) || 0).toFixed(1)}%`, 'Efficiency']}
           />
           <ReferenceLine y={100} stroke="#6B7280" strokeDasharray="3 3" label="Target" />
           <Bar
