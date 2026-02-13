@@ -3,7 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 import Breadcrumb from '@/components/Breadcrumb';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'TECH' | 'SERVICE_WRITER' | 'PARTS' | 'MANAGER';
+}
 
 interface WorkOrderReport {
   id: string;
@@ -39,6 +47,7 @@ interface ReportSummary {
 
 export default function WIPAgingPage() {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [report, setReport] = useState<WorkOrderReport[]>([]);
   const [byStatus, setByStatus] = useState<Record<string, WorkOrderReport[]>>({});
   const [summary, setSummary] = useState<ReportSummary | null>(null);
@@ -46,27 +55,33 @@ export default function WIPAgingPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
   useEffect(() => {
-    fetchReport();
+    fetchData();
   }, []);
 
-  const fetchReport = async () => {
+  const fetchData = async () => {
     try {
-      const res = await fetch('/api/reports/wip-aging');
+      const [userRes, reportRes] = await Promise.all([
+        fetch('/api/auth/me'),
+        fetch('/api/reports/wip-aging'),
+      ]);
 
-      if (!res.ok) {
-        if (res.status === 401) {
-          router.push('/login');
-          return;
-        }
-        throw new Error('Failed to fetch report');
+      if (!userRes.ok || !reportRes.ok) {
+        router.push('/login');
+        return;
       }
 
-      const data = await res.json();
-      setReport(data.report || []);
-      setByStatus(data.byStatus || {});
-      setSummary(data.summary || null);
+      const [userData, reportData] = await Promise.all([
+        userRes.json(),
+        reportRes.json(),
+      ]);
+
+      setUser(userData.user);
+      setReport(reportData.report || []);
+      setByStatus(reportData.byStatus || {});
+      setSummary(reportData.summary || null);
     } catch (error) {
-      console.error('Error fetching report:', error);
+      console.error('Error fetching data:', error);
+      router.push('/login');
     } finally {
       setLoading(false);
     }
@@ -116,17 +131,24 @@ export default function WIPAgingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">Loading...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading...</p>
         </div>
       </div>
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar user={user} />
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-8">
         <Breadcrumb
           items={[
             { label: 'Reports', href: '/reports' },

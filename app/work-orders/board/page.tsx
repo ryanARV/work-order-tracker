@@ -261,7 +261,7 @@ export default function KanbanBoardPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar user={user} />
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-8">
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-8">
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="section-header">Work Order Board</h1>
