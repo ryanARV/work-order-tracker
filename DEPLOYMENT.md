@@ -16,11 +16,17 @@ git add .
 # Commit with descriptive message
 git commit -m "Your commit message"
 
-# Push to main branch (triggers automatic Vercel deployment)
+# Push to main branch
 git push origin main
 ```
 
-**Note**: Pushing to the `main` branch automatically triggers Vercel deployment. The deployment typically takes 1-2 minutes.
+#### Step 1b: Deploy to Vercel
+```bash
+# Deploy to production using Vercel CLI
+vercel --prod
+```
+
+**Note**: This manually triggers the production deployment. The deployment typically takes 1-2 minutes. You'll see build logs in the terminal and a deployment URL when complete.
 
 ---
 
@@ -78,12 +84,13 @@ mv .env.backup .env
 ### Summary of Complete Deployment
 
 When you run through the full deployment process, you will:
-1. ✅ Push code to GitHub main branch → Triggers Vercel deployment
-2. ✅ Switch to production environment files
-3. ✅ Verify/apply database migrations
-4. ✅ Reseed sample data
-5. ✅ Restore local environment
-6. ✅ Verify production site is working
+1. ✅ Commit and push code to GitHub main branch
+2. ✅ Deploy to Vercel using CLI (`vercel --prod`)
+3. ✅ Switch to production environment files
+4. ✅ Verify/apply database migrations
+5. ✅ Reseed sample data
+6. ✅ Restore local environment
+7. ✅ Verify production site is working
 
 ---
 
@@ -202,13 +209,16 @@ Consider setting up:
 ## Quick Reference Commands
 
 ### Full Deployment (Code + Database) - RECOMMENDED
-Complete deployment workflow including git push to production:
+Complete deployment workflow including git push and Vercel deployment:
 
 ```bash
-# Stage, commit, and push to GitHub (triggers Vercel deployment)
+# Stage, commit, and push to GitHub
 git add . && \
 git commit -m "Your deployment message" && \
 git push origin main && \
+
+# Deploy to Vercel production
+vercel --prod && \
 
 # Switch to production environment
 mv .env .env.backup && \
@@ -221,7 +231,7 @@ npm run seed:sample && \
 # Restore local environment
 mv .env.backup .env
 
-echo "✅ Deployment complete! Check Vercel for deployment status."
+echo "✅ Deployment complete! Production site is live with fresh data."
 ```
 
 ### Database Refresh Only (No Code Changes)
@@ -248,9 +258,12 @@ Use this when you only have code changes and don't need to refresh the database:
 # Stage, commit, and push to GitHub
 git add . && \
 git commit -m "Your commit message" && \
-git push origin main
+git push origin main && \
 
-echo "✅ Code pushed to GitHub! Vercel will deploy automatically."
+# Deploy to Vercel production
+vercel --prod
+
+echo "✅ Code deployed to production!"
 ```
 
 ### Check Git Status
@@ -266,4 +279,4 @@ git diff
 
 ---
 
-**Last Updated**: 2026-02-12 (Updated to emphasize git push workflow)
+**Last Updated**: 2026-02-12 (Updated to include manual Vercel deployment via CLI)
