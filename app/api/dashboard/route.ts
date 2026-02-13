@@ -401,7 +401,7 @@ async function getManagerDashboard(userId: string, startOfWeek: Date, endOfWeek:
       prisma.timeEntry.count({
         where: {
           deletedAt: null,
-          approvalState: 'PENDING'
+          approvalState: 'SUBMITTED'
         }
       }),
       prisma.estimate.count({
