@@ -304,7 +304,6 @@ async function getPartsDashboard(userId: string, thirtyDaysAgo: Date) {
     // Recent part transactions
     prisma.partTransaction.findMany({
       where: {
-        deletedAt: null,
         createdAt: { gte: thirtyDaysAgo }
       },
       select: {
