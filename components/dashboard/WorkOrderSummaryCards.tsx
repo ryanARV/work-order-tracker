@@ -58,7 +58,7 @@ export default function WorkOrderSummaryCards({ summary, showTotal = false }: Wo
     cards.push({
       title: 'Total',
       value: summary.total,
-      color: 'gray' as const,
+      color: 'blue' as const,
       icon: '📊',
       status: ''
     });
