@@ -63,6 +63,12 @@ export default function Navbar({ user }: NavbarProps) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex space-x-4 py-2">
                 <a
+                  href="/dashboard"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  📊 Dashboard
+                </a>
+                <a
                   href="/estimates"
                   className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
@@ -111,6 +117,12 @@ export default function Navbar({ user }: NavbarProps) {
           {mobileMenuOpen && (
             <div className="bg-blue-700 md:hidden">
               <div className="px-4 py-2 space-y-1">
+                <a
+                  href="/dashboard"
+                  className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  📊 Dashboard
+                </a>
                 <a
                   href="/estimates"
                   className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
@@ -173,6 +185,12 @@ export default function Navbar({ user }: NavbarProps) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex space-x-4 py-2">
                 <a
+                  href="/dashboard"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  📊 Dashboard
+                </a>
+                <a
                   href="/estimates"
                   className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
@@ -215,6 +233,12 @@ export default function Navbar({ user }: NavbarProps) {
           {mobileMenuOpen && (
             <div className="bg-blue-700 md:hidden">
               <div className="px-4 py-2 space-y-1">
+                <a
+                  href="/dashboard"
+                  className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  📊 Dashboard
+                </a>
                 <a
                   href="/estimates"
                   className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
@@ -271,6 +295,12 @@ export default function Navbar({ user }: NavbarProps) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex space-x-4 py-2">
                 <a
+                  href="/dashboard"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  📊 Dashboard
+                </a>
+                <a
                   href="/estimates"
                   className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
@@ -307,6 +337,12 @@ export default function Navbar({ user }: NavbarProps) {
           {mobileMenuOpen && (
             <div className="bg-blue-700 md:hidden">
               <div className="px-4 py-2 space-y-1">
+                <a
+                  href="/dashboard"
+                  className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  📊 Dashboard
+                </a>
                 <a
                   href="/estimates"
                   className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
@@ -357,6 +393,12 @@ export default function Navbar({ user }: NavbarProps) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex space-x-4 py-2">
                 <a
+                  href="/dashboard"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  📊 Dashboard
+                </a>
+                <a
                   href="/parts"
                   className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
@@ -369,6 +411,12 @@ export default function Navbar({ user }: NavbarProps) {
           {mobileMenuOpen && (
             <div className="bg-blue-700 md:hidden">
               <div className="px-4 py-2 space-y-1">
+                <a
+                  href="/dashboard"
+                  className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  📊 Dashboard
+                </a>
                 <a
                   href="/parts"
                   className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
@@ -395,6 +443,12 @@ export default function Navbar({ user }: NavbarProps) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex space-x-4 py-2">
                 <a
+                  href="/dashboard"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  📊 Dashboard
+                </a>
+                <a
                   href="/my-work"
                   className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
                 >
@@ -407,6 +461,12 @@ export default function Navbar({ user }: NavbarProps) {
           {mobileMenuOpen && (
             <div className="bg-blue-700 md:hidden">
               <div className="px-4 py-2 space-y-1">
+                <a
+                  href="/dashboard"
+                  className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  📊 Dashboard
+                </a>
                 <a
                   href="/my-work"
                   className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"

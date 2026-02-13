@@ -139,4 +139,25 @@ body {
   .divider {
     @apply border-t border-gray-200 my-6;
   }
+
+  /* Dashboard Styles */
+  .dashboard-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6;
+  }
+
+  .dashboard-card-metric {
+    @apply text-3xl md:text-4xl font-bold mb-1;
+  }
+
+  .dashboard-card-label {
+    @apply text-sm text-gray-600 font-medium;
+  }
+
+  .alert-card {
+    @apply border-l-4 border-orange-500 bg-orange-50 rounded-lg p-4 md:p-6;
+  }
+
+  .critical-alert-card {
+    @apply border-l-4 border-red-500 bg-red-50 rounded-lg p-4 md:p-6;
+  }
 }
