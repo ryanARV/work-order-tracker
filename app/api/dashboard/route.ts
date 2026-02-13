@@ -310,16 +310,12 @@ async function getPartsDashboard(userId: string, thirtyDaysAgo: Date) {
         id: true,
         type: true,
         quantity: true,
+        workOrderId: true,
         createdAt: true,
         part: {
           select: {
             partNumber: true,
             description: true
-          }
-        },
-        workOrder: {
-          select: {
-            woNumber: true
           }
         },
         user: {

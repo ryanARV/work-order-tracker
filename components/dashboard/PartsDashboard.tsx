@@ -114,9 +114,9 @@ export default function PartsDashboard({ data }: PartsDashboardProps) {
                       <span className="text-xs text-gray-500">
                         Qty: {txn.quantity}
                       </span>
-                      {txn.workOrder && (
+                      {txn.workOrderId && (
                         <span className="text-xs text-gray-500">
-                          • WO: {txn.workOrder.woNumber}
+                          • WO ID: {txn.workOrderId}
                         </span>
                       )}
                       {txn.user && (
