@@ -333,7 +333,7 @@ async function getPartsDashboard(userId: string, thirtyDaysAgo: Date) {
   const totalParts = parts.length;
   const lowStockCount = parts.filter(p => (p.quantityOnHand - p.quantityReserved) <= p.reorderLevel).length;
   const criticalStockCount = parts.filter(p => p.quantityOnHand < 3).length;
-  const totalValue = parts.reduce((sum, p) => sum + (p.quantityOnHand * p.unitCost), 0);
+  const totalValue = parts.reduce((sum, p) => sum + (p.quantityOnHand * Number(p.unitCost)), 0);
 
   return {
     role: 'PARTS',
