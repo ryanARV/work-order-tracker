@@ -550,7 +550,7 @@ async function getAdminDashboard(userId: string, startOfWeek: Date, endOfWeek: D
 
   const totalParts = parts.length;
   const lowStockCount = parts.filter(p => (p.quantityOnHand - p.quantityReserved) <= p.reorderLevel).length;
-  const totalValue = parts.reduce((sum, p) => sum + (p.quantityOnHand * p.unitCost), 0);
+  const totalValue = parts.reduce((sum, p) => sum + (p.quantityOnHand * Number(p.unitCost)), 0);
 
   return {
     role: 'ADMIN',
